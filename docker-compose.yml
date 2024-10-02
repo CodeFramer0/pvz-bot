@@ -1,0 +1,129 @@
+services:
+  web:
+    container_name: pvz_django
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always  
+    command: >
+      sh -c "
+        python manage.py makemigrations &&
+        python manage.py makemigrations robot &&
+        python manage.py migrate django_celery_beat &&
+        python manage.py migrate django_celery_results &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --timeout 600 --workers 4 --threads 4
+      "
+    volumes:
+      - static:/backend/static
+      - static:/updated_static
+      - media:/backend/media
+      - ./backend/robot/migrations:/backend/robot/migrations
+    expose:
+      - 8000
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+      - redis
+    
+
+  db:
+    container_name: pvz_db
+    image: postgres:16.2
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./backend/.env
+    ports:
+      - 5433:5433
+
+  nginx:
+    container_name: pvz_nginx
+    build: ./nginx
+    restart: always
+    volumes:
+      - static:/backend/static
+      - media:/backend/media
+    ports:
+      - 80:80
+    depends_on:
+      - web
+
+  bot:
+    container_name: pvz_bot
+    build: ./bot
+    restart: always
+    env_file:
+      - ./bot/.env
+    command: python runbot.py
+    depends_on:
+      - nginx
+      - web
+      - celery_beat
+
+
+  redis:
+    container_name: pvz_redis
+    image: redis:5-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    expose:
+      - 6379
+    depends_on:
+      - db
+
+  celery_worker:
+    container_name: pvz_celery_worker
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    command: celery -A core worker -l info
+    volumes:
+      - static:/backend/static
+      - media:/backend/media 
+      - ./backend/robot/migrations:/backend/robot/migrations
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - db
+      - web
+
+  celery_beat:
+    container_name: pvz_celery_beat
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - static:/backend/static
+      - media:/backend/media
+      - ./backend/robot/migrations:/backend/robot/migrations
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - db
+      - web
+
+  static_files_updater:
+    container_name: static_files_updater
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: sh -c "cp -r /backend/static/* /updated_static/"
+    volumes:
+      - static:/updated_static
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+  static:
+  media:
