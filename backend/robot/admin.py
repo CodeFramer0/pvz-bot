@@ -6,7 +6,7 @@ from .models import *
 
 @admin.register(TelegramUser)
 class TelegramUserAdmin(admin.ModelAdmin):
-    list_display = ("nick_name", "name", "user_id", "date_join", "is_administrator")
+    list_display = ("nick_name", "name", "id", "user_id", "date_join", "is_administrator")
     search_fields = ("nick_name", "name", "user_id")
     list_filter = ("is_administrator", "date_join")
     ordering = ("-date_join",)
@@ -18,7 +18,7 @@ class TelegramUserAdmin(admin.ModelAdmin):
 @admin.register(PickupPoint)
 class PickupPointAdmin(admin.ModelAdmin):
     form = PickPointForm
-    list_display = ("marketplace", "address")
+    list_display = ("address","marketplace",)
     list_filter = ("marketplace",)
     search_fields = ("address",)
     ordering = ("marketplace", "address")
@@ -27,8 +27,8 @@ class PickupPointAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
-        "id",
         "customer",
+        "id",
         "pickup_point",
         "full_name",
         "date_created",
