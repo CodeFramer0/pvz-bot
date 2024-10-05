@@ -94,7 +94,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    response = await OrderAPI().create(
+    order = await OrderAPI().create(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
@@ -104,18 +104,18 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
         files={"barcode_image": image_bytes},
     )
 
-    if response:
+    if order:
         await bot.delete_message(
             chat_id=message.chat.id, message_id=user_data["message_id"]
         )
-        pickup_point = await PickupPointAPI().get(id=response["pickup_point"])
+        pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
         await message.answer_photo(
             photo=types.InputFile(image_data),
-            caption=f"<strong>Ваш заказ №{response['id']} успешно создан!. </strong>🎉\n"
-            f"<strong>ФИО:</strong> {response['full_name']}\n"
+            caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
+            f"<strong>ФИО:</strong> {order['full_name']}\n"
             f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
-            f"<strong>Комментарий к заказу:</strong> {response['comment']}\n\n"
+            f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
@@ -159,7 +159,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    response = await OrderAPI().create(
+    order = await OrderAPI().create(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
@@ -169,18 +169,19 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
         files={"barcode_image": image_bytes},
     )
 
-    if response:
+    if order:
         await bot.delete_message(
             chat_id=query.message.chat.id, message_id=user_data["message_id"]
         )
-        pickup_point = await PickupPointAPI().get(id=response["pickup_point"])
+        pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
         message = await query.message.answer_photo(
             photo=types.InputFile(image_data),
-            caption=f"<strong>Ваш заказ №{response['id']} успешно создан!. </strong>🎉\n"
-            f"<strong>ФИО:</strong> {response['full_name']}\n"
+            caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
+            f"<strong>ФИО:</strong> {order['full_name']}\n"
             f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
-            f"<strong>Комментарий к заказу:</strong> {response['comment']}\n\n"
+            f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
+            f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
