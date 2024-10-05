@@ -13,11 +13,16 @@ class UserExistsMiddleware(BaseMiddleware):
     async def on_pre_process_message(self, message: types.Message, data: dict):
         user_id = message.from_user.id
         user = await self.api.get(params={"user_id": user_id})
+        nick_name = message.from_user.username
+        
+        if not nick_name:
+            nick_name = "NoName"
+            
         if not user:
             user = await self.api.create(
                 body={
                     "name": message.from_user.full_name,
-                    "nick_name": message.from_user.username,
+                    "nick_name": nick_name,
                     "user_id": user_id,
                 }
             )
@@ -29,7 +34,7 @@ class UserExistsMiddleware(BaseMiddleware):
             id=user["id"],
             body={
                 "user_id": message.from_user.id,
-                "name": message.from_user.full_name,
+                "name": nick_name,
                 "nick_name": message.from_user.username,
             },
         )
@@ -43,11 +48,16 @@ class UserExistsMiddleware(BaseMiddleware):
         user_id = callback_query.from_user.id
         user = await self.api.get(params={"user_id": user_id})
 
+        nick_name = callback_query.from_user.username
+        
+        if not nick_name:
+            nick_name = "NoName"
+        
         if not user:
             user = await self.api.create(
                 body={
                     "name": f"{callback_query.from_user.full_name}",
-                    "nick_name": callback_query.from_user.username,
+                    "nick_name": nick_name,
                     "chat_id": user_id,
                 }
             )
