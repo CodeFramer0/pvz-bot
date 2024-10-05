@@ -90,7 +90,7 @@ class Order(models.Model):
     def image_tag(self):
         if self.barcode_image:
             return mark_safe(
-                f'<img src="{self.barcode_image.url}" style="width: 100px; height: auto;" />'
+                f'<a target="_blank" href="{self.barcode_image.url}"><img src="{self.barcode_image.url}" style="width: 300px; height: auto;" /></a>'
             )
         return "Нет изображения"
 
