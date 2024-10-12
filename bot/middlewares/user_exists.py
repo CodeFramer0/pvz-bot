@@ -14,10 +14,10 @@ class UserExistsMiddleware(BaseMiddleware):
         user_id = message.from_user.id
         user = await self.api.get(params={"user_id": user_id})
         nick_name = message.from_user.username
-        
+
         if not nick_name:
             nick_name = "NoName"
-            
+
         if not user:
             user = await self.api.create(
                 body={
@@ -49,10 +49,10 @@ class UserExistsMiddleware(BaseMiddleware):
         user = await self.api.get(params={"user_id": user_id})
 
         nick_name = callback_query.from_user.username
-        
+
         if not nick_name:
             nick_name = "NoName"
-        
+
         if not user:
             user = await self.api.create(
                 body={

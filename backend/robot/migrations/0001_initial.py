@@ -8,54 +8,174 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='TelegramUser',
+            name="TelegramUser",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(default='NoName', max_length=30, verbose_name='Имя')),
-                ('nick_name', models.CharField(default='NoName', max_length=32, verbose_name='Ник')),
-                ('date_join', models.DateTimeField(auto_now_add=True, verbose_name='Дата и время создания')),
-                ('user_id', models.CharField(max_length=100, unique=True, verbose_name='User ID')),
-                ('is_blocked', models.BooleanField(default=False, verbose_name='Заблокирован')),
-                ('is_administrator', models.BooleanField(default=False, verbose_name='Является администратором')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        default="NoName", max_length=30, verbose_name="Имя"
+                    ),
+                ),
+                (
+                    "nick_name",
+                    models.CharField(
+                        default="NoName", max_length=32, verbose_name="Ник"
+                    ),
+                ),
+                (
+                    "date_join",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата и время создания"
+                    ),
+                ),
+                (
+                    "user_id",
+                    models.CharField(
+                        max_length=100, unique=True, verbose_name="User ID"
+                    ),
+                ),
+                (
+                    "is_blocked",
+                    models.BooleanField(default=False, verbose_name="Заблокирован"),
+                ),
+                (
+                    "is_administrator",
+                    models.BooleanField(
+                        default=False, verbose_name="Является администратором"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Пользователь',
-                'verbose_name_plural': 'Пользователи',
+                "verbose_name": "Пользователь",
+                "verbose_name_plural": "Пользователи",
             },
         ),
         migrations.CreateModel(
-            name='PickupPoint',
+            name="PickupPoint",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('address', models.CharField(max_length=255, verbose_name='Адрес пункта выдачи')),
-                ('marketplace', models.CharField(choices=[('ozon', 'Озон'), ('wb', 'ВБ'), ('yandex', 'Яндекс Маркет'), ('сdek', 'СДЭК')], max_length=50, verbose_name='Название маркетплейса')),
-                ('admin_telegram_user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notification_accounts', to='robot.telegramuser', verbose_name='Аккаунт для уведомлений')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "address",
+                    models.CharField(
+                        max_length=255, verbose_name="Адрес пункта выдачи"
+                    ),
+                ),
+                (
+                    "marketplace",
+                    models.CharField(
+                        choices=[
+                            ("ozon", "Озон"),
+                            ("wb", "ВБ"),
+                            ("yandex", "Яндекс Маркет"),
+                            ("сdek", "СДЭК"),
+                        ],
+                        max_length=50,
+                        verbose_name="Название маркетплейса",
+                    ),
+                ),
+                (
+                    "admin_telegram_user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notification_accounts",
+                        to="robot.telegramuser",
+                        verbose_name="Аккаунт для уведомлений",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Пункт выдачи',
-                'verbose_name_plural': 'Пункты выдачи',
+                "verbose_name": "Пункт выдачи",
+                "verbose_name_plural": "Пункты выдачи",
             },
         ),
         migrations.CreateModel(
-            name='Order',
+            name="Order",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('full_name', models.CharField(max_length=100, verbose_name='ФИО')),
-                ('comment', models.TextField(blank=True, null=True, verbose_name='Комментарий к заказу')),
-                ('barcode_image', models.ImageField(upload_to='barcodes/', verbose_name='Изображение штрих-кода')),
-                ('date_created', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('status', models.CharField(choices=[('pending', 'Ожидает'), ('in_process', 'В процессе'), ('completed', 'Завершён'), ('barcode_expired', 'Штрих код устарел')], default='pending', max_length=20, verbose_name='Статус')),
-                ('pickup_point', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='robot.pickuppoint', verbose_name='Пункт выдачи')),
-                ('customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='robot.telegramuser', verbose_name='Пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("full_name", models.CharField(max_length=100, verbose_name="ФИО")),
+                (
+                    "comment",
+                    models.TextField(
+                        blank=True, null=True, verbose_name="Комментарий к заказу"
+                    ),
+                ),
+                (
+                    "barcode_image",
+                    models.ImageField(
+                        upload_to="barcodes/", verbose_name="Изображение штрих-кода"
+                    ),
+                ),
+                (
+                    "date_created",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата создания"
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Ожидает"),
+                            ("in_process", "В процессе"),
+                            ("completed", "Завершён"),
+                            ("barcode_expired", "Штрих код устарел"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                        verbose_name="Статус",
+                    ),
+                ),
+                (
+                    "pickup_point",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="orders",
+                        to="robot.pickuppoint",
+                        verbose_name="Пункт выдачи",
+                    ),
+                ),
+                (
+                    "customer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="orders",
+                        to="robot.telegramuser",
+                        verbose_name="Пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Заказ',
-                'verbose_name_plural': 'Заказы',
+                "verbose_name": "Заказ",
+                "verbose_name_plural": "Заказы",
             },
         ),
     ]

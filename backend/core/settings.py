@@ -20,6 +20,7 @@ DEBUG = env.bool("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 BOT_TOKEN = env.str("BOT_TOKEN")
 BOT_NAME = env.str("BOT_NAME")
+DUMP_CHAT_ID = env.str("DUMP_CHAT_ID")
 BOT = Bot(token=BOT_TOKEN)
 
 logging.basicConfig(
@@ -154,7 +155,13 @@ MEDIA_URL = "/media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CELERY_BEAT_SCHEDULE = {}
+CELERY_BEAT_SCHEDULE = {
+    "dumpdata-and-send-to-telegram-daily": {
+        "task": "robot.tasks.dumpdata_and_send_to_telegram",
+        "schedule": timedelta(hours=24),
+    },
+
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
