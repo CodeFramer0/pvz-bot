@@ -28,7 +28,7 @@ class PickupPoint(models.Model):
         ("ozon", "Озон"),
         ("wb", "ВБ"),
         ("yandex", "Яндекс Маркет"),
-        ("сdek", "СДЭК"),
+        ("cdek", "СДЭК"),
     ]
 
     address = models.CharField(verbose_name="Адрес пункта выдачи", max_length=255)
