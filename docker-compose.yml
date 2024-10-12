@@ -9,9 +9,9 @@ services:
       sh -c "
         python manage.py makemigrations &&
         python manage.py makemigrations robot &&
+        python manage.py migrate --noinput &&
         python manage.py migrate django_celery_beat &&
         python manage.py migrate django_celery_results &&
-        python manage.py migrate &&
         python manage.py collectstatic --noinput &&
         gunicorn core.wsgi:application --bind 0.0.0.0:8000 --timeout 600 --workers 4 --threads 4
       "
