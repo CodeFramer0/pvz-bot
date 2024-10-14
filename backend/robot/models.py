@@ -93,8 +93,12 @@ class Order(models.Model):
                 f'<a target="_blank" href="{self.barcode_image.url}"><img src="{self.barcode_image.url}" style="width: 300px; height: auto;" /></a>'
             )
         return "Нет изображения"
+    
+    def cell_id(self):
+        return self.customer.id
 
     image_tag.short_description = "Предварительный просмотр"
+    cell_id.short_description = "Номер ячейки"
 
     def __str__(self):
         return f"Заказ {self.id} от {self.customer}"

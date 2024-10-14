@@ -38,6 +38,7 @@ class PickupPointAdmin(admin.ModelAdmin):
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         "customer",
+        "cell_id",
         "id",
         "pickup_point",
         "full_name",
