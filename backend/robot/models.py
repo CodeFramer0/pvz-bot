@@ -101,4 +101,4 @@ class Order(models.Model):
     cell_id.short_description = "Номер ячейки"
 
     def __str__(self):
-        return f"Заказ {self.id} от {self.customer}"
+        return f"Заказ {self.id} (номер ячейки {self.customer.id}) от {self.customer}"
