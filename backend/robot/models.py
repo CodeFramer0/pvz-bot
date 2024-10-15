@@ -53,9 +53,9 @@ class PickupPoint(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = [
         ("pending", "Ожидает"),
-        ("in_process", "В процессе"),
         ("completed", "Завершён"),
         ("barcode_expired", "Штрих код устарел"),
+        ("not_arrived","Ваши товары еще не в Анастасиевке")
     ]
 
     customer = models.ForeignKey(
