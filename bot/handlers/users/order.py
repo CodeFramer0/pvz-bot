@@ -11,6 +11,14 @@ from keyboards.inline.callback_data import (
 )
 from loader import bot, dp
 from states.order import OrderStates
+from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToForwardNotFound
+
+
+async def delete_message(chat_id, message_id):
+    try:
+        await bot.delete_message(chat_id, message_id)
+    except MessageCantBeDeleted:
+        pass
 
 
 @dp.message_handler(content_types=["photo"])
@@ -105,11 +113,11 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
     )
 
     if order:
-        await bot.delete_message(
+        await delete_message(
             chat_id=message.chat.id, message_id=user_data["message_id"]
         )
         pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
-        await message.answer_photo(
+        forward_message = await message.answer_photo(
             photo=types.InputFile(image_data),
             caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
             f"<strong>ФИО:</strong> {order['full_name']}\n"
@@ -119,11 +127,14 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
-        await bot.forward_message(
-            chat_id=admin["user_id"],
-            from_chat_id=message.chat.id,
-            message_id=message.message_id,
-        )
+        try:
+            await bot.forward_message(
+                chat_id=admin["user_id"],
+                from_chat_id=message.chat.id,
+                message_id=forward_message.message_id,
+            )
+        except MessageToForwardNotFound:
+            pass
     else:
         await message.answer(
             "Произошла ошибка при создании заказа. Попробуйте еще раз.",
@@ -170,11 +181,11 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
     )
 
     if order:
-        await bot.delete_message(
+        await delete_message(
             chat_id=query.message.chat.id, message_id=user_data["message_id"]
         )
         pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
-        message = await query.message.answer_photo(
+        forward_message = await query.message.answer_photo(
             photo=types.InputFile(image_data),
             caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
             f"<strong>ФИО:</strong> {order['full_name']}\n"
@@ -185,11 +196,14 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
-        await bot.forward_message(
-            chat_id=admin["user_id"],
-            from_chat_id=query.from_user.id,
-            message_id=message.message_id,
-        )
+        try:
+            await bot.forward_message(
+                chat_id=admin["user_id"],
+                from_chat_id=query.from_user.id,
+                message_id=forward_message.message_id,
+            )
+        except MessageToForwardNotFound:
+            pass
     else:
         await query.message.answer(
             "Произошла ошибка при создании заказа. Попробуйте еще раз.",
