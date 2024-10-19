@@ -47,9 +47,19 @@ class OrderAdmin(admin.ModelAdmin):
         "image_tag",
     )
     list_filter = ("status", "pickup_point", "date_created")
-    search_fields = ("telegram_user__name", "full_name", "pickup_point__address", "customer_id")
+    search_fields = (
+        "telegram_user__name",
+        "full_name",
+        "pickup_point__address",
+        "customer_id",
+    )
     ordering = ("-date_created",)
-    readonly_fields = ("customer", "image_tag", "date_created", "cell_id",)
+    readonly_fields = (
+        "customer",
+        "image_tag",
+        "date_created",
+        "cell_id",
+    )
     fieldsets = (
         (
             None,

@@ -55,7 +55,7 @@ class Order(models.Model):
         ("pending", "Ожидает"),
         ("completed", "Завершён"),
         ("barcode_expired", "Штрих код устарел"),
-        ("not_arrived","Ваши товары еще не в Анастасиевке")
+        ("not_arrived", "Ваши товары еще не в Анастасиевке"),
     ]
 
     customer = models.ForeignKey(
@@ -93,7 +93,7 @@ class Order(models.Model):
                 f'<a target="_blank" href="{self.barcode_image.url}"><img src="{self.barcode_image.url}" style="width: 300px; height: auto;" /></a>'
             )
         return "Нет изображения"
-    
+
     def cell_id(self):
         return self.customer.id
 

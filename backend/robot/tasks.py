@@ -25,6 +25,7 @@ def expire_old_orders():
 async def send_message(user_id, message):
     return await settings.BOT.send_message(chat_id=user_id, text=message)
 
+
 async def send_telegram_dump():
     date = timezone.now().date()
     output_file = f"robot-{date}.json"
@@ -49,6 +50,7 @@ async def send_telegram_dump():
         if os.path.exists(output_file):
             os.remove(output_file)
 
+
 @shared_task
 def send_telegram_message(user_id, message):
     return asyncio.run(send_message(user_id, message))
@@ -57,5 +59,3 @@ def send_telegram_message(user_id, message):
 @shared_task(bind=True)
 def dumpdata_and_send_to_telegram(self):
     return asyncio.run(send_telegram_dump())
-
-   

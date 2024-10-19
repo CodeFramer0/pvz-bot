@@ -160,7 +160,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "robot.tasks.dumpdata_and_send_to_telegram",
         "schedule": timedelta(hours=24),
     },
-
 }
 
 REST_FRAMEWORK = {
