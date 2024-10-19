@@ -124,6 +124,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
             f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
             f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
+             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
