@@ -113,7 +113,7 @@ services:
       - web
 
   static_files_updater:
-    container_name: static_files_updater
+    container_name: pvz_static_files_updater
     build:
       context: ./backend
       dockerfile: Dockerfile
