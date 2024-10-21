@@ -35,7 +35,7 @@ class UserExistsMiddleware(BaseMiddleware):
             body={
                 "user_id": message.from_user.id,
                 "name": nick_name,
-                "nick_name": message.from_user.username,
+                "nick_name": nick_name,
             },
         )
 
