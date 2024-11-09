@@ -35,7 +35,7 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
         reply_markup=order_keyboards.cancel(),
     )
     await state.update_data(message_id=message.message_id)
-    await OrderStates.next()
+    await OrderStates.waiting_for_full_name.set()
 
 
 @dp.message_handler(state=OrderStates.waiting_for_full_name)
@@ -81,11 +81,31 @@ async def handle_pickup_point(
     await query.answer("")
     await state.update_data(pickup_point_id=callback_data["pickup_point_id"])
     await query.message.edit_text(
+        "Осталось совсем немного :) \n" "Введите пожалуйста сумму Вашего заказа.",
+        reply_markup=order_keyboards.cancel(),
+    )
+    await OrderStates.waiting_for_amount.set()
+
+
+@dp.callback_query_handler(
+    cb_order_pickup_point_action.filter(action="choose_pickup_point"),
+    state=OrderStates.waiting_for_pickup_point,
+)
+@dp.message_handler(state=OrderStates.waiting_for_amount)
+async def handle_amount(message: types.Message, state: FSMContext, user):
+    await message.delete()
+    amount = message.text
+    await state.update_data(amount=amount)
+    user_data = await state.get_data()
+    message_id = user_data.get("message_id")
+    await bot.edit_message_text(
         "И последний шаг:\n"
         "<strong>Вы можете добавить комментарий к Вашему заказу.\n\nЕсли комментарий Вам не нужен нажмите на кнопку 'пропустить'.</strong>",
+        chat_id=message.chat.id,
+        message_id=message_id,
         reply_markup=order_keyboards.skip(),
     )
-    await OrderStates.next()
+    await OrderStates.waiting_for_comment.set()
 
 
 @dp.message_handler(state=OrderStates.waiting_for_comment)
@@ -93,6 +113,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
     await message.delete()
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
+    amount = user_data.get("amount")
     file_path = user_data.get("file_path")
     pickup_point_id = user_data.get("pickup_point_id")
     comment = message.text
@@ -108,6 +129,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
             "pickup_point": pickup_point_id,
             "customer": user["id"],
             "comment": comment,
+            "amount": amount,
         },
         files={"barcode_image": image_bytes},
     )
@@ -123,8 +145,9 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
             f"<strong>ФИО:</strong> {order['full_name']}\n"
             f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
+            f"<strong>Сумма заказа:</strong> {order['amount']}\n"
             f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
-             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
+            f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
         admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
@@ -164,6 +187,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
     full_name = user_data.get("full_name")
     file_path = user_data.get("file_path")
     pickup_point_id = user_data.get("pickup_point_id")
+    amount = user_data.get("amount")
     comment = ""
 
     image_data = await bot.download_file(file_path)
@@ -177,6 +201,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
             "pickup_point": pickup_point_id,
             "customer": user["id"],
             "comment": comment,
+            "amount": amount,
         },
         files={"barcode_image": image_bytes},
     )
@@ -192,6 +217,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
             f"<strong>ФИО:</strong> {order['full_name']}\n"
             f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
+            f"<strong>Сумма заказа:</strong> {order['amount']}\n"
             f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",

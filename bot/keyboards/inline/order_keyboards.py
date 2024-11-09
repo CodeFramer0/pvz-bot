@@ -66,6 +66,16 @@ def marketplaces():
             ),
         )
     )
+
+    keyboard.insert(
+        InlineKeyboardButton(
+            text="Почта России +150₽ 📪",
+            callback_data=cb_order_marketplace_action.new(
+                action="choose_marketplace", marketplace="mail"
+            ),
+        )
+    )
+
     keyboard.insert(
         InlineKeyboardButton(
             text="Отменить ❌", callback_data=cb_order_action.new(action="cancel")

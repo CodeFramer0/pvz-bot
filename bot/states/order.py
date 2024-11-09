@@ -5,4 +5,5 @@ class OrderStates(StatesGroup):
     waiting_for_full_name = State()
     waiting_for_marketplace = State()
     waiting_for_pickup_point = State()
+    waiting_for_amount = State()
     waiting_for_comment = State()

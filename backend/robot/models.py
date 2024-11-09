@@ -29,6 +29,7 @@ class PickupPoint(models.Model):
         ("wb", "ВБ"),
         ("yandex", "Яндекс Маркет"),
         ("cdek", "СДЭК"),
+        ("mail", "Почта России +150₽"),
     ]
 
     address = models.CharField(verbose_name="Адрес пункта выдачи", max_length=255)
@@ -71,6 +72,7 @@ class Order(models.Model):
         verbose_name="Пункт выдачи",
     )
     full_name = models.CharField(verbose_name="ФИО", max_length=100)
+    amount = models.CharField(verbose_name="Сумма заказа", max_length=128, default="0")
     comment = models.TextField(
         verbose_name="Комментарий к заказу", blank=True, null=True
     )

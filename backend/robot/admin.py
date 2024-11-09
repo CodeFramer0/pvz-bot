@@ -68,6 +68,7 @@ class OrderAdmin(admin.ModelAdmin):
                     "customer",
                     "pickup_point",
                     "full_name",
+                    "amount",
                     "comment",
                     "barcode_image",
                     "status",
