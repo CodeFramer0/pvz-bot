@@ -9,9 +9,6 @@ from states.order import OrderStates
     state=[
         OrderStates.waiting_for_marketplace,
         OrderStates.waiting_for_pickup_point,
-        OrderStates.waiting_for_amount,
-        OrderStates.waiting_for_comment,
-        OrderStates.waiting_for_full_name,
         
     ]
 )
