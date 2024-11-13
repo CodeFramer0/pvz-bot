@@ -2,16 +2,20 @@ import api
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from loader import dp
-from states import *
+from states.order import OrderStates
 
 
 @dp.message_handler(
     state=[
-        order.OrderStates.waiting_for_marketplace,
-        order.OrderStates.waiting_for_pickup_point,
+        OrderStates.waiting_for_marketplace,
+        OrderStates.waiting_for_pickup_point,
+        OrderStates.waiting_for_amount,
+        OrderStates.waiting_for_comment,
+        OrderStates.waiting_for_full_name,
+        
     ]
 )
-async def real_cancellation(message: types.Message, state: FSMContext, user):
+async def real_cancellation(message: types.Message,state:FSMContext):
     if message.text == "/cancel":
         await state.finish()
         await message.answer(
@@ -27,8 +31,8 @@ async def real_cancellation(message: types.Message, state: FSMContext, user):
         )
 
 
-@dp.message_handler(commands=["cancel"], state=order.OrderStates)
-async def fake_cancellation(message: types.Message, user):
+@dp.message_handler(commands=["cancel"])
+async def fake_cancellation(message: types.Message):
     await message.answer(
         f"Состояние успешно отменено, жду Ваш штрих/QR-код 🤖.\n"
         "Я бот для заказа доставки из пункта выдачи.\n\n"
