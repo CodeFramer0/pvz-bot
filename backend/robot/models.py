@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.html import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 
 class TelegramUser(models.Model):
@@ -53,10 +54,12 @@ class PickupPoint(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ("pending", "Ожидает"),
-        ("completed", "Завершён"),
-        ("barcode_expired", "Штрих код устарел"),
-        ("not_arrived", "Ваши товары еще не в Анастасиевке"),
+        ("pending", _("Ожидает.")),
+        ("completed", _("Завершён.")),
+        ("barcode_expired", _("Штрих код устарел.")),
+        ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
+        ("insufficient_funds", _("Недостаточно средств.")),
+        ("card_not_linked", _("Банковская карта не привязана.")),
     ]
 
     customer = models.ForeignKey(
