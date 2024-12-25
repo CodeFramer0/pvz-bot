@@ -13,7 +13,7 @@ services:
         python manage.py migrate django_celery_beat &&
         python manage.py migrate django_celery_results &&
         python manage.py collectstatic --noinput &&
-        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --timeout 600 --workers 4 --threads 4
+        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 4
       "
     volumes:
       - static:/backend/static
@@ -23,7 +23,7 @@ services:
     expose:
       - 8000
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - db
       - redis
@@ -36,7 +36,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ./backend/.env
+      - .env
     ports:
       - 5433:5433
 
@@ -57,7 +57,7 @@ services:
     build: ./bot
     restart: always
     env_file:
-      - ./bot/.env
+      - .env
     command: python runbot.py
     depends_on:
       - nginx
@@ -88,7 +88,7 @@ services:
       - media:/backend/media 
       - ./backend/robot/migrations:/backend/robot/migrations
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - redis
       - db
@@ -106,7 +106,7 @@ services:
       - media:/backend/media
       - ./backend/robot/migrations:/backend/robot/migrations
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - redis
       - db
