@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class TelegramUser(models.Model):
-    name = models.CharField(verbose_name="Имя", max_length=30, default="NoName")
+    name = models.CharField(verbose_name="Имя", max_length=512, default="NoName")
     nick_name = models.CharField(verbose_name="Ник", max_length=32, default="NoName")
     date_join = models.DateTimeField(
         auto_now_add=True, verbose_name="Дата и время создания"
