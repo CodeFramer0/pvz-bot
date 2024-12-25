@@ -27,7 +27,11 @@ services:
     depends_on:
       - db
       - redis
-    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://web:8000/api/v1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     container_name: pvz_db
@@ -60,9 +64,11 @@ services:
       - .env
     command: python runbot.py
     depends_on:
-      - nginx
-      - web
-      - celery_beat
+      web:
+        condition: service_healthy
+      nginx:
+        condition: service_started
+    
 
 
   redis:
