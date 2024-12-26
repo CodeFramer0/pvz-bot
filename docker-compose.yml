@@ -4,20 +4,18 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    restart: always  
+    restart: always
     command: >
       sh -c "
         python manage.py makemigrations &&
-        python manage.py makemigrations robot &&
         python manage.py migrate --noinput &&
         python manage.py migrate django_celery_beat &&
         python manage.py migrate django_celery_results &&
         python manage.py collectstatic --noinput &&
-        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 4
+        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 4 --timeout 300
       "
     volumes:
       - static:/backend/static
-      - static:/updated_static
       - media:/backend/media
       - ./backend/robot/migrations:/backend/robot/migrations
     expose:
@@ -25,12 +23,14 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://web:8000/api/v1/"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
 
   db:
@@ -41,8 +41,27 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
-      - 5433:5433
+      - 5433:5432
+
+  redis:
+    container_name: pvz_redis
+    image: redis:5-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    expose:
+      - 6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     container_name: pvz_nginx
@@ -54,7 +73,13 @@ services:
     ports:
       - 80:80
     depends_on:
-      - web
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://web:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   bot:
     container_name: pvz_bot
@@ -66,21 +91,10 @@ services:
     depends_on:
       web:
         condition: service_healthy
-      nginx:
-        condition: service_started
-    
-
-
-  redis:
-    container_name: pvz_redis
-    image: redis:5-alpine
-    restart: always
-    ports:
-      - 6379:6379
-    expose:
-      - 6379
-    depends_on:
-      - db
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
 
   celery_worker:
     container_name: pvz_celery_worker
@@ -88,7 +102,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
-    command: celery -A core worker -l info
+    command: celery -A core worker -l info --concurrency=2
     volumes:
       - static:/backend/static
       - media:/backend/media 
@@ -96,9 +110,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
-      - web
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      web:
+        condition: service_healthy
 
   celery_beat:
     container_name: pvz_celery_beat
@@ -106,7 +123,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
-    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --max-interval=30
     volumes:
       - static:/backend/static
       - media:/backend/media
@@ -114,20 +131,12 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
-      - db
-      - web
-
-  static_files_updater:
-    container_name: pvz_static_files_updater
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    command: sh -c "cp -r /backend/static/* /updated_static/"
-    volumes:
-      - static:/updated_static
-    depends_on:
-      - db
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      web:
+        condition: service_healthy
 
 volumes:
   postgres_data:
