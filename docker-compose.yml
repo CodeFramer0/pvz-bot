@@ -12,7 +12,7 @@ services:
         python manage.py migrate django_celery_beat &&
         python manage.py migrate django_celery_results &&
         python manage.py collectstatic --noinput &&
-        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 4 --timeout 300
+        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300
       "
     volumes:
       - static:/backend/static
@@ -32,6 +32,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: "512M"
 
   db:
     container_name: pvz_db
@@ -48,6 +53,11 @@ services:
       retries: 5
     ports:
       - 5433:5432
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
 
   redis:
     container_name: pvz_redis
@@ -62,6 +72,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "128M"
 
   nginx:
     container_name: pvz_nginx
@@ -80,6 +95,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
 
   bot:
     container_name: pvz_bot
@@ -95,6 +115,11 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
 
   celery_worker:
     container_name: pvz_celery_worker
@@ -102,7 +127,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
-    command: celery -A core worker -l info --concurrency=2
+    command: celery -A core worker -l info --concurrency=1
     volumes:
       - static:/backend/static
       - media:/backend/media 
@@ -116,6 +141,11 @@ services:
         condition: service_healthy
       web:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
 
   celery_beat:
     container_name: pvz_celery_beat
@@ -137,6 +167,11 @@ services:
         condition: service_healthy
       web:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
 
 volumes:
   postgres_data:
