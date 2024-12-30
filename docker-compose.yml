@@ -87,6 +87,11 @@ services:
       - media:/backend/media
     ports:
       - 80:80
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       web:
         condition: service_healthy
