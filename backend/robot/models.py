@@ -60,6 +60,7 @@ class Order(models.Model):
         ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
         ("insufficient_funds", _("Недостаточно средств.")),
         ("card_not_linked", _("Банковская карта не привязана.")),
+        ("contact_manager", _("Свяжитесь с менеджером.")),
     ]
 
     customer = models.ForeignKey(
