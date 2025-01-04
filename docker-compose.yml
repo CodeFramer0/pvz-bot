@@ -177,6 +177,19 @@ services:
         limits:
           cpus: "0.5"
           memory: "256M"
+  watchdog:
+    container_name: pvz_watchdog
+    build:
+      context: ./watchdog
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "128M"
 
 volumes:
   postgres_data:
