@@ -55,7 +55,7 @@ class PickupPoint(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = [
         ("pending", _("Ожидает.")),
-        ("completed", _("Завершён.")),
+        ("completed", _("Собран и погружен.")),
         ("barcode_expired", _("Штрих код устарел.")),
         ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
         ("insufficient_funds", _("Недостаточно средств.")),
