@@ -59,24 +59,24 @@ services:
           cpus: "0.5"
           memory: "512M"
 
-redis:
-  container_name: pvz_redis
-  image: redis:5-alpine
-  restart: always
-  volumes:
-    - ./redis_data:/data
-  ports:
-    - "6379:6379"
-  healthcheck:
-    test: ["CMD", "redis-cli", "ping"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-  deploy:
-    resources:
-      limits:
-        cpus: "0.25"
-        memory: "128M"
+  redis:
+    container_name: pvz_redis
+    image: redis:5-alpine
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "128M"
 
   nginx:
     container_name: pvz_nginx
