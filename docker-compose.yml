@@ -60,6 +60,7 @@ services:
           memory: "512M"
 
   redis:
+    user: root
     container_name: pvz_redis
     image: redis:5-alpine
     restart: always
@@ -77,7 +78,7 @@ services:
         limits:
           cpus: "0.25"
           memory: "128M"
-
+    command: redis-server --save 60 1 --dir /data
   nginx:
     container_name: pvz_nginx
     build: ./nginx
