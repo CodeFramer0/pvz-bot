@@ -147,3 +147,4 @@ letsencrypt/
 
 */__pycache__/
 backend/django_dev
+*.rdb

@@ -55,12 +55,13 @@ class PickupPoint(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = [
         ("pending", _("Ожидает.")),
-        ("completed", _("Собран и погружен.")),
+        ("completed", _("Собран и погружен на ближайшую доставку.")),
         ("barcode_expired", _("Штрих код устарел.")),
         ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
         ("insufficient_funds", _("Недостаточно средств.")),
         ("card_not_linked", _("Банковская карта не привязана.")),
         ("contact_manager", _("Свяжитесь с менеджером.")),
+        ("processed",_("Обработан.") )
     ]
 
     customer = models.ForeignKey(

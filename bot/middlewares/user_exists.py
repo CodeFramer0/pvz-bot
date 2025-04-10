@@ -61,5 +61,11 @@ class UserExistsMiddleware(BaseMiddleware):
                     "chat_id": user_id,
                 }
             )
-
+        user = await self.api.update(
+            id=user["id"],
+            body={
+                "name": nick_name,
+                "nick_name": nick_name,
+            },
+        )
         data["user"] = user
