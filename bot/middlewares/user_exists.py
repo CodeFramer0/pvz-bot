@@ -34,7 +34,7 @@ class UserExistsMiddleware(BaseMiddleware):
             id=user["id"],
             body={
                 "user_id": message.from_user.id,
-                "name": nick_name,
+                "name": message.from_user.full_name,
                 "nick_name": nick_name,
             },
         )
@@ -64,7 +64,7 @@ class UserExistsMiddleware(BaseMiddleware):
         user = await self.api.update(
             id=user["id"],
             body={
-                "name": nick_name,
+                "name": callback_query.from_user.full_name,
                 "nick_name": nick_name,
             },
         )
