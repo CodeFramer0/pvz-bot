@@ -48,7 +48,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "pickup_point", "date_created")
     search_fields = (
-        "telegram_user__name",
+        "customer__nick_name",
         "full_name",
         "pickup_point__address",
         "customer_id",
