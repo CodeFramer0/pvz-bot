@@ -27,7 +27,7 @@ def expire_old_orders():
 
 
 async def send_message(user_id, message):
-    return await settings.BOT.send_message(chat_id=user_id, text=message)
+    await settings.BOT.send_message(chat_id=user_id, text=message)
 
 
 async def send_telegram_dump():
@@ -57,12 +57,12 @@ async def send_telegram_dump():
 
 @shared_task
 def send_telegram_message(user_id, message):
-    return asyncio.run(send_message(user_id, message))
+    asyncio.run(send_message(user_id, message))
 
 
 @shared_task(bind=True)
 def dumpdata_and_send_to_telegram(self):
-    return asyncio.run(send_telegram_dump())
+     asyncio.run(send_telegram_dump())
 
 @shared_task
 def send_mass_telegram(text=None, file_data=None, file_name=None, is_image=False):
