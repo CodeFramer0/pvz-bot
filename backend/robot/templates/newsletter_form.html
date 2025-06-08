@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Рассылка</title>
+    <style>
+      body {
+        background-color: #111;
+        color: #eee;
+        font-family: "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px;
+      }
+
+      h2 {
+        color: #00ff99;
+        margin-bottom: 20px;
+      }
+
+      form {
+        background-color: #1b1b1b;
+        padding: 25px 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 255, 153, 0.3);
+        width: 100%;
+        max-width: 500px;
+      }
+
+      textarea,
+      input[type="file"] {
+        width: 100%;
+        margin-bottom: 15px;
+        background-color: #2a2a2a;
+        color: #eee;
+        border: none;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      textarea:focus,
+      input[type="file"]:focus {
+        outline: 2px solid #00ff99;
+      }
+
+      button {
+        background-color: #00ff99;
+        color: #000;
+        border: none;
+        padding: 12px 25px;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      button:disabled {
+        background-color: #444;
+        color: #999;
+        cursor: wait;
+      }
+
+      button:hover:not(:disabled) {
+        background-color: #00cc7a;
+      }
+
+      .message {
+        color: #00ff99;
+        margin-bottom: 20px;
+      }
+
+      .progress {
+        width: 100%;
+        background-color: #333;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 20px;
+        margin-top: 20px;
+        display: none;
+      }
+
+      .progress-bar {
+        width: 0%;
+        height: 100%;
+        background-color: #00ff99;
+        transition: width 0.3s;
+      }
+
+      .status-text {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #888;
+        text-align: center;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🧨 Админ-рассылка</h2>
+
+    {% if message %}
+    <p class="message">{{ message }}</p>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="newsletter-form">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit" id="submit-btn">🚀 Отправить</button>
+
+      <div class="progress" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="status-text" id="status-text">Отправка...</div>
+    </form>
+
+    <script>
+      const form = document.getElementById("newsletter-form");
+      const btn = document.getElementById("submit-btn");
+      const progress = document.getElementById("progress-container");
+      const progressBar = document.getElementById("progress-bar");
+      const statusText = document.getElementById("status-text");
+
+      form.addEventListener("submit", () => {
+        btn.disabled = true;
+        progress.style.display = "block";
+        statusText.style.display = "block";
+
+        let width = 0;
+        const interval = setInterval(() => {
+          if (width >= 100) {
+            clearInterval(interval);
+            statusText.innerText = "Готово! Рассылка началась.";
+            btn.disabled = false;
+          } else {
+            width += 10 + Math.random() * 10;
+            progressBar.style.width = Math.min(width, 100) + "%";
+          }
+        }, 300);
+      });
+    </script>
+  </body>
+</html>

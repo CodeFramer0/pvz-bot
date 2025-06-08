@@ -18,6 +18,7 @@ os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 BOT_TOKEN = env.str("BOT_TOKEN")
 BOT_NAME = env.str("BOT_NAME")
 DUMP_CHAT_ID = env.str("DUMP_CHAT_ID")
