@@ -5,9 +5,14 @@ from django.shortcuts import render
 
 from .forms import NewsletterForm
 from .tasks import send_mass_telegram
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 
 
+@login_required(login_url="/admin/login/")
 def newsletter_view(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Нет доступа.")
     if request.method == "POST":
         form = NewsletterForm(request.POST, request.FILES)
         if form.is_valid():
