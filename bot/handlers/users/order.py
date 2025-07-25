@@ -2,22 +2,21 @@ from io import BytesIO
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.utils.exceptions import (MessageCantBeDeleted,
+                                      MessageToForwardNotFound)
 from api import OrderAPI, PickupPointAPI, TelegramUserAPI
 from keyboards.inline import order_keyboards
-from keyboards.inline.callback_data import (
-    cb_order_action,
-    cb_order_marketplace_action,
-    cb_order_pickup_point_action,
-)
+from keyboards.inline.callback_data import (cb_order_action,
+                                            cb_order_marketplace_action,
+                                            cb_order_pickup_point_action)
 from loader import bot, dp
 from states.order import OrderStates
-from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToForwardNotFound
 
 
 async def delete_message(chat_id, message_id):
     try:
         await bot.delete_message(chat_id, message_id)
-    except MessageCantBeDeleted:
+    except:
         pass
 
 
@@ -45,10 +44,9 @@ async def handle_full_name(message: types.Message, state: FSMContext):
     await state.update_data(full_name=full_name)
     user_data = await state.get_data()
     message_id = user_data.get("message_id")
-    await bot.edit_message_text(
+    await delete_message(chat_id=message.chat.id, message_id=message_id)
+    await message.answer(
         "<strong>Теперь выберите маркетплейс.</strong>",
-        chat_id=message.chat.id,
-        message_id=message_id,
         reply_markup=order_keyboards.marketplaces(),
     )
     await OrderStates.waiting_for_marketplace.set()
@@ -64,7 +62,10 @@ async def choose_marketplace(
     await query.answer("")
     marketplace = callback_data["marketplace"]
     pickup_points = await PickupPointAPI().get(params={"marketplace": marketplace})
-    await query.message.edit_text(
+    await delete_message(
+        chat_id=query.message.chat.id, message_id=query.message.message_id
+    )
+    await query.message.answer(
         "Супер!\n<strong>Теперь выберите один из доступных пунктов выдачи заказов.</strong>",
         reply_markup=order_keyboards.pickup_points(pickup_points),
     )
@@ -80,7 +81,8 @@ async def handle_pickup_point(
 ):
     await query.answer("")
     await state.update_data(pickup_point_id=callback_data["pickup_point_id"])
-    await query.message.edit_text(
+    await delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+    await query.message.answer(
         "Осталось совсем немного :) \n" "Введите пожалуйста сумму Вашего заказа.",
         reply_markup=order_keyboards.cancel(),
     )
@@ -98,11 +100,10 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
     await state.update_data(amount=amount)
     user_data = await state.get_data()
     message_id = user_data.get("message_id")
-    await bot.edit_message_text(
+    await delete_message(chat_id=message.chat.id, message_id=message_id)
+    await message.answer(
         "И последний шаг:\n"
         "<strong>Вы можете добавить комментарий к Вашему заказу.\n\nЕсли комментарий Вам не нужен нажмите на кнопку 'пропустить'.</strong>",
-        chat_id=message.chat.id,
-        message_id=message_id,
         reply_markup=order_keyboards.skip(),
     )
     await OrderStates.waiting_for_comment.set()
@@ -173,7 +174,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 )
 async def cancel(query: types.CallbackQuery, state: FSMContext):
     await query.answer("")
-    await query.message.edit_text("Создание заказа отменено.")
+    await query.message.answer("Создание заказа отменено.")
     await state.finish()
 
 
