@@ -50,7 +50,9 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = (
         "full_name",
         "pickup_point__address",
-        "customer_id",
+        "customer__id",
+        "customer__nick_name",
+        "customer__name",
     )
     ordering = ("-date_created",)
     readonly_fields = (
