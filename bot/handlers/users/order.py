@@ -36,7 +36,7 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
 async def handle_full_name(message: types.Message, user,state: FSMContext):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message, state)
+        return await back_to_main_menu(message,user, state)
     full_name = message.text
     await state.update_data(full_name=full_name)
     user_data = await state.get_data()
@@ -94,7 +94,7 @@ async def handle_pickup_point(
 async def handle_amount(message: types.Message, state: FSMContext, user):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message, state)
+        return await back_to_main_menu(message,user, state)
     amount = message.text
     await state.update_data(amount=amount)
     user_data = await state.get_data()
@@ -113,7 +113,7 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
 async def handle_comment(message: types.Message, state: FSMContext, user):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message, state)
+        return await back_to_main_menu(message,user, state)
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
     amount = user_data.get("amount")
@@ -176,8 +176,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 )
 async def cancel(query: types.CallbackQuery, state: FSMContext):
     await query.answer("")
-    await query.message.answer("Создание заказа отменено.")
-    await state.finish()
+    await back_to_main_menu(query.message, state)
 
 
 @dp.callback_query_handler(
