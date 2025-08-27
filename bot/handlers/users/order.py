@@ -13,6 +13,7 @@ from loader import bot, dp
 from states.order import OrderStates
 from utils.utils import delete_message
 
+from .start import back_to_main_menu
 
 @dp.message_handler(content_types=["photo"],state="*")
 async def handle_photo(message: types.Message, state: FSMContext, user):
@@ -34,6 +35,8 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
 @dp.message_handler(state=OrderStates.waiting_for_full_name)
 async def handle_full_name(message: types.Message, user,state: FSMContext):
     await message.delete()
+    if message.text == "/start":
+        return await back_to_main_menu(message, state)
     full_name = message.text
     await state.update_data(full_name=full_name)
     user_data = await state.get_data()
@@ -90,6 +93,8 @@ async def handle_pickup_point(
 @dp.message_handler(state=OrderStates.waiting_for_amount)
 async def handle_amount(message: types.Message, state: FSMContext, user):
     await message.delete()
+    if message.text == "/start":
+        return await back_to_main_menu(message, state)
     amount = message.text
     await state.update_data(amount=amount)
     user_data = await state.get_data()
@@ -107,6 +112,8 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
 @dp.message_handler(state=OrderStates.waiting_for_comment)
 async def handle_comment(message: types.Message, state: FSMContext, user):
     await message.delete()
+    if message.text == "/start":
+        return await back_to_main_menu(message, state)
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
     amount = user_data.get("amount")
