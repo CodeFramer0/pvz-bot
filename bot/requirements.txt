@@ -9,3 +9,5 @@ pydantic
 pytest
 pytest-asyncio
 requests
+aioredis==2.0.1
+redis==6.4.0

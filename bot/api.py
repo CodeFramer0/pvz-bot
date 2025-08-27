@@ -1,7 +1,7 @@
 import logging
 
 import aiohttp
-from loader import API_TOKEN, API_URL
+from config import API_TOKEN, API_URL
 
 HEADERS = {
     "Authorization": f"token {API_TOKEN}",

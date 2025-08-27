@@ -4,23 +4,17 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
                                       MessageToForwardNotFound)
-from api import OrderAPI, PickupPointAPI, TelegramUserAPI
+from loader import telegram_user_api,pickup_point_api,order_api
 from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
 from loader import bot, dp
 from states.order import OrderStates
+from utils.utils import delete_message
 
 
-async def delete_message(chat_id, message_id):
-    try:
-        await bot.delete_message(chat_id, message_id)
-    except:
-        pass
-
-
-@dp.message_handler(content_types=["photo"])
+@dp.message_handler(content_types=["photo"],state="*")
 async def handle_photo(message: types.Message, state: FSMContext, user):
     photo = message.photo[-1]
     file_id = photo.file_id
@@ -38,43 +32,45 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
 
 
 @dp.message_handler(state=OrderStates.waiting_for_full_name)
-async def handle_full_name(message: types.Message, state: FSMContext):
+async def handle_full_name(message: types.Message, user,state: FSMContext):
     await message.delete()
     full_name = message.text
     await state.update_data(full_name=full_name)
     user_data = await state.get_data()
     message_id = user_data.get("message_id")
     await delete_message(chat_id=message.chat.id, message_id=message_id)
-    await message.answer(
+    message = await message.answer(
         "<strong>Теперь выберите маркетплейс.</strong>",
         reply_markup=order_keyboards.marketplaces(),
     )
+    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_marketplace.set()
 
 
 @dp.callback_query_handler(
     cb_order_marketplace_action.filter(action="choose_marketplace"),
-    state=OrderStates.waiting_for_marketplace,
+    state="*",
 )
 async def choose_marketplace(
     query: types.CallbackQuery, callback_data: dict, state: FSMContext
 ):
     await query.answer("")
     marketplace = callback_data["marketplace"]
-    pickup_points = await PickupPointAPI().get(params={"marketplace": marketplace})
+    pickup_points = await pickup_point_api.get(params={"marketplace": marketplace})
     await delete_message(
         chat_id=query.message.chat.id, message_id=query.message.message_id
     )
-    await query.message.answer(
+    message = await query.message.answer(
         "Супер!\n<strong>Теперь выберите один из доступных пунктов выдачи заказов.</strong>",
         reply_markup=order_keyboards.pickup_points(pickup_points),
     )
+    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_pickup_point.set()
 
 
 @dp.callback_query_handler(
     cb_order_pickup_point_action.filter(action="choose_pickup_point"),
-    state=OrderStates.waiting_for_pickup_point,
+    state="*",
 )
 async def handle_pickup_point(
     query: types.CallbackQuery, callback_data: dict, state: FSMContext
@@ -82,17 +78,15 @@ async def handle_pickup_point(
     await query.answer("")
     await state.update_data(pickup_point_id=callback_data["pickup_point_id"])
     await delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
-    await query.message.answer(
+    message = await query.message.answer(
         "Осталось совсем немного :) \n" "Введите пожалуйста сумму Вашего заказа.",
         reply_markup=order_keyboards.cancel(),
     )
+    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_amount.set()
 
 
-@dp.callback_query_handler(
-    cb_order_pickup_point_action.filter(action="choose_pickup_point"),
-    state=OrderStates.waiting_for_pickup_point,
-)
+
 @dp.message_handler(state=OrderStates.waiting_for_amount)
 async def handle_amount(message: types.Message, state: FSMContext, user):
     await message.delete()
@@ -101,11 +95,12 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
     user_data = await state.get_data()
     message_id = user_data.get("message_id")
     await delete_message(chat_id=message.chat.id, message_id=message_id)
-    await message.answer(
+    message = await message.answer(
         "И последний шаг:\n"
         "<strong>Вы можете добавить комментарий к Вашему заказу.\n\nЕсли комментарий Вам не нужен нажмите на кнопку 'пропустить'.</strong>",
         reply_markup=order_keyboards.skip(),
     )
+    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_comment.set()
 
 
@@ -124,7 +119,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    order = await OrderAPI().create(
+    order = await order_api.create(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
@@ -139,7 +134,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
         await delete_message(
             chat_id=message.chat.id, message_id=user_data["message_id"]
         )
-        pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
+        pickup_point = await pickup_point_api.get(id=order["pickup_point"])
         forward_message = await message.answer_photo(
             photo=types.InputFile(image_data),
             caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
@@ -151,7 +146,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
-        admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
+        admin = await telegram_user_api.get(id=pickup_point["admin_telegram_user"])
         try:
             await bot.forward_message(
                 chat_id=admin["user_id"],
@@ -170,7 +165,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 
 @dp.callback_query_handler(
     cb_order_action.filter(action="cancel"),
-    state=OrderStates,
+    state="*",
 )
 async def cancel(query: types.CallbackQuery, state: FSMContext):
     await query.answer("")
@@ -180,7 +175,7 @@ async def cancel(query: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(
     cb_order_action.filter(action="skip"),
-    state=OrderStates.waiting_for_comment,
+    state="*",
 )
 async def skip(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
@@ -196,7 +191,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    order = await OrderAPI().create(
+    order = await order_api.create(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
@@ -211,7 +206,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
         await delete_message(
             chat_id=query.message.chat.id, message_id=user_data["message_id"]
         )
-        pickup_point = await PickupPointAPI().get(id=order["pickup_point"])
+        pickup_point = await pickup_point_api.get(id=order["pickup_point"])
         forward_message = await query.message.answer_photo(
             photo=types.InputFile(image_data),
             caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
@@ -223,7 +218,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
         )
-        admin = await TelegramUserAPI().get(id=pickup_point["admin_telegram_user"])
+        admin = await telegram_user_api.get(id=pickup_point["admin_telegram_user"])
         try:
             await bot.forward_message(
                 chat_id=admin["user_id"],

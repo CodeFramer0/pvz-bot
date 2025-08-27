@@ -1,10 +1,7 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from .callback_data import (
-    cb_order_action,
-    cb_order_marketplace_action,
-    cb_order_pickup_point_action,
-)
+from .callback_data import (cb_order_action, cb_order_marketplace_action,
+                            cb_order_pickup_point_action)
 
 
 def cancel():
