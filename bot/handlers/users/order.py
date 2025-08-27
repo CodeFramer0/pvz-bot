@@ -28,8 +28,8 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
         "Отлично!\n<strong>Теперь введите ФИО.</strong>",
         reply_markup=order_keyboards.cancel(),
     )
-    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_full_name.set()
+    await state.update_data(message_id=message.message_id)
 
 
 @dp.message_handler(state=OrderStates.waiting_for_full_name)
@@ -46,8 +46,8 @@ async def handle_full_name(message: types.Message, user,state: FSMContext):
         "<strong>Теперь выберите маркетплейс.</strong>",
         reply_markup=order_keyboards.marketplaces(),
     )
-    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_marketplace.set()
+    await state.update_data(message_id=message.message_id)
 
 
 @dp.callback_query_handler(
@@ -67,8 +67,9 @@ async def choose_marketplace(
         "Супер!\n<strong>Теперь выберите один из доступных пунктов выдачи заказов.</strong>",
         reply_markup=order_keyboards.pickup_points(pickup_points),
     )
-    await state.update_data(message_id=message.message_id)
+    
     await OrderStates.waiting_for_pickup_point.set()
+    await state.update_data(message_id=message.message_id)
 
 
 @dp.callback_query_handler(
@@ -85,8 +86,8 @@ async def handle_pickup_point(
         "Осталось совсем немного :) \n" "Введите пожалуйста сумму Вашего заказа.",
         reply_markup=order_keyboards.cancel(),
     )
-    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_amount.set()
+    await state.update_data(message_id=message.message_id)
 
 
 
@@ -105,8 +106,8 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
         "<strong>Вы можете добавить комментарий к Вашему заказу.\n\nЕсли комментарий Вам не нужен нажмите на кнопку 'пропустить'.</strong>",
         reply_markup=order_keyboards.skip(),
     )
-    await state.update_data(message_id=message.message_id)
     await OrderStates.waiting_for_comment.set()
+    await state.update_data(message_id=message.message_id)
 
 
 @dp.message_handler(state=OrderStates.waiting_for_comment)
