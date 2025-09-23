@@ -61,7 +61,8 @@ class Order(models.Model):
         ("insufficient_funds", _("Недостаточно средств.")),
         ("card_not_linked", _("Банковская карта не привязана.")),
         ("contact_manager", _("Свяжитесь с менеджером.")),
-        ("processed",_("Обработан.") )
+        ("processed", _("Обработан.")),
+        ("arrived", _("Готов к выдаче.")),
     ]
 
     customer = models.ForeignKey(

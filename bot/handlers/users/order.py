@@ -4,18 +4,18 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
                                       MessageToForwardNotFound)
-from loader import telegram_user_api,pickup_point_api,order_api
 from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp
+from loader import bot, dp, order_api, pickup_point_api, telegram_user_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
 from .start import back_to_main_menu
 
-@dp.message_handler(content_types=["photo"],state="*")
+
+@dp.message_handler(content_types=["photo"], state="*")
 async def handle_photo(message: types.Message, state: FSMContext, user):
     photo = message.photo[-1]
     file_id = photo.file_id
@@ -33,10 +33,10 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
 
 
 @dp.message_handler(state=OrderStates.waiting_for_full_name)
-async def handle_full_name(message: types.Message, user,state: FSMContext):
+async def handle_full_name(message: types.Message, user, state: FSMContext):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message,user, state)
+        return await back_to_main_menu(message, user, state)
     full_name = message.text
     await state.update_data(full_name=full_name)
     user_data = await state.get_data()
@@ -67,7 +67,7 @@ async def choose_marketplace(
         "Супер!\n<strong>Теперь выберите один из доступных пунктов выдачи заказов.</strong>",
         reply_markup=order_keyboards.pickup_points(pickup_points),
     )
-    
+
     await OrderStates.waiting_for_pickup_point.set()
     await state.update_data(message_id=message.message_id)
 
@@ -81,7 +81,9 @@ async def handle_pickup_point(
 ):
     await query.answer("")
     await state.update_data(pickup_point_id=callback_data["pickup_point_id"])
-    await delete_message(chat_id=query.message.chat.id, message_id=query.message.message_id)
+    await delete_message(
+        chat_id=query.message.chat.id, message_id=query.message.message_id
+    )
     message = await query.message.answer(
         "Осталось совсем немного :) \n" "Введите пожалуйста сумму Вашего заказа.",
         reply_markup=order_keyboards.cancel(),
@@ -90,12 +92,11 @@ async def handle_pickup_point(
     await state.update_data(message_id=message.message_id)
 
 
-
 @dp.message_handler(state=OrderStates.waiting_for_amount)
 async def handle_amount(message: types.Message, state: FSMContext, user):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message,user, state)
+        return await back_to_main_menu(message, user, state)
     amount = message.text
     await state.update_data(amount=amount)
     user_data = await state.get_data()
@@ -114,7 +115,7 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
 async def handle_comment(message: types.Message, state: FSMContext, user):
     await message.delete()
     if message.text == "/start":
-        return await back_to_main_menu(message,user, state)
+        return await back_to_main_menu(message, user, state)
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
     amount = user_data.get("amount")

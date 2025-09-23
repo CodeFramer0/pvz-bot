@@ -1,12 +1,12 @@
 import base64
 import mimetypes
 
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.shortcuts import render
 
 from .forms import NewsletterForm
 from .tasks import send_mass_telegram
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
 
 
 @login_required(login_url="/admin/login/")
@@ -32,16 +32,14 @@ def newsletter_view(request):
                 is_image = mime_type and mime_type.startswith("image")
 
             send_mass_telegram.delay(
-                text=text,
-                file_data=file_data,
-                file_name=file_name,
-                is_image=is_image
+                text=text, file_data=file_data, file_name=file_name, is_image=is_image
             )
 
-            return render(request, "newsletter_form.html", {
-                "form": NewsletterForm(),
-                "message": "Рассылка запущена!"
-            })
+            return render(
+                request,
+                "newsletter_form.html",
+                {"form": NewsletterForm(), "message": "Рассылка запущена!"},
+            )
 
     else:
         form = NewsletterForm()

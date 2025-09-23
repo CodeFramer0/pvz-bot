@@ -6,13 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('robot', '0012_alter_order_status'),
+        ("robot", "0012_alter_order_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Ожидает.'), ('completed', 'Собран и погружен на ближайшую доставку.'), ('barcode_expired', 'Штрих код устарел.'), ('not_arrived_goods', 'Ваши товары еще не в Анастасиевке.'), ('insufficient_funds', 'Недостаточно средств.'), ('card_not_linked', 'Банковская карта не привязана.'), ('contact_manager', 'Свяжитесь с менеджером.'), ('processed', 'Обработан.')], default='pending', max_length=20, verbose_name='Статус'),
+            model_name="order",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Ожидает."),
+                    ("completed", "Собран и погружен на ближайшую доставку."),
+                    ("barcode_expired", "Штрих код устарел."),
+                    ("not_arrived_goods", "Ваши товары еще не в Анастасиевке."),
+                    ("insufficient_funds", "Недостаточно средств."),
+                    ("card_not_linked", "Банковская карта не привязана."),
+                    ("contact_manager", "Свяжитесь с менеджером."),
+                    ("processed", "Обработан."),
+                ],
+                default="pending",
+                max_length=20,
+                verbose_name="Статус",
+            ),
         ),
     ]

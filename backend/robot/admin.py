@@ -1,7 +1,9 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.utils.translation import gettext_lazy as _
 
 from .forms import PickPointForm
 from .models import *
+from .tasks import *
 
 
 @admin.register(TelegramUser)
@@ -33,6 +35,31 @@ class PickupPointAdmin(admin.ModelAdmin):
     search_fields = ("address",)
     ordering = ("marketplace", "address")
 
+class StatusFilter(admin.SimpleListFilter):
+    title = _("Статус")
+    parameter_name = "status"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("pending", _("Не готовы к выдаче")),
+            ("pending", _("Ожидают")),
+            ("completed", _("Собраны и погружены на ближайшую доставку")),
+            ("barcode_expired", _("Штрих код устарел")),
+            ("not_arrived_goods", _("Товары еще не в Анастасиевке")),
+            ("insufficient_funds", _("Недостаточно средств")),
+            ("card_not_linked", _("Банковская карта не привязана")),
+            ("contact_manager", _("Свяжитесь с менеджером")),
+            ("processed", _("Обработаны.")),
+            ("arrived", _("Готовы к выдаче")),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "pending":
+            return queryset.exclude(status="arrived")  # только не готовы
+        if self.value() == "arrived":
+            return queryset.filter(status="arrived")
+        return queryset
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -46,7 +73,11 @@ class OrderAdmin(admin.ModelAdmin):
         "status",
         "image_tag",
     )
-    list_filter = ("status", "pickup_point", "date_created")
+    list_filter = (
+        StatusFilter,
+        "pickup_point",
+        "date_created",
+    )
     search_fields = (
         "full_name",
         "pickup_point__address",
@@ -80,3 +111,23 @@ class OrderAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    actions = ["mark_as_arrived"]
+
+    @admin.action(description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента")
+    def mark_as_arrived(self, request, queryset):
+        # Проверяем, что поле status корректное
+        pending_orders = queryset.exclude(status="arrived")
+
+        # Получаем список id, чтобы отправлять уведомления
+        order_ids = pending_orders.values_list("id", flat=True)
+        for order_id in order_ids:
+            logging.info(f"Отправка уведомления заказу {order_id}")
+            send_order_arrived_notification.delay(order_id)
+
+        updated_count = pending_orders.update(status="arrived")
+        self.message_user(
+            request,
+            f"{updated_count} заказ(ов) отмечены как 'Прибывший' и уведомления отправлены.",
+            messages.SUCCESS,
+        )

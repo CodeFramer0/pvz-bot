@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('robot', '0010_alter_order_status'),
+        ("robot", "0010_alter_order_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='telegramuser',
-            name='name',
-            field=models.CharField(default='NoName', max_length=512, verbose_name='Имя'),
+            model_name="telegramuser",
+            name="name",
+            field=models.CharField(
+                default="NoName", max_length=512, verbose_name="Имя"
+            ),
         ),
     ]

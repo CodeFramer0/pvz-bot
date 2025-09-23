@@ -2,11 +2,11 @@ from aiogram import types
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
 from loader import dp
-from utils.utils import delete_last_message,delete_message
-from utils.utils import state_finish
+from utils.utils import delete_last_message, delete_message, state_finish
 
-@dp.message_handler(CommandStart(),state="*")
-async def bot_start(message: types.Message,user,state:FSMContext):
+
+@dp.message_handler(CommandStart(), state="*")
+async def bot_start(message: types.Message, user, state: FSMContext):
     await state_finish(state)
     data = await state.get_data()
     if data:
@@ -19,10 +19,9 @@ async def bot_start(message: types.Message,user,state:FSMContext):
     )
 
 
-
 async def back_to_main_menu(message: types.Message, user: dict, state: FSMContext):
     await delete_last_message(message)
     data = await state.get_data()
     if data:
         await delete_message(chat_id=user["user_id"], message_id=data.get("message_id"))
-    await bot_start(message,user,state)
+    await bot_start(message, user, state)

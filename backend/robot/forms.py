@@ -17,7 +17,8 @@ class PickPointForm(forms.ModelForm):
 
 class NewsletterForm(forms.Form):
     text = forms.CharField(
-        label="Текст сообщения", required=False,
-        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Введите текст..."})
+        label="Текст сообщения",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Введите текст..."}),
     )
     file = forms.FileField(label="Фото или файл", required=False)

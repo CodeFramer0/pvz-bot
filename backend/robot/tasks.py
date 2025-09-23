@@ -27,7 +27,18 @@ def expire_old_orders():
 
 
 async def send_message(user_id, message):
-    await settings.BOT.send_message(chat_id=user_id, text=message)
+    return await settings.BOT.send_message(chat_id=user_id, text=message)
+
+async def send_photo(user_id, photo_path, caption: str = None):
+    """
+    Отправка фото через InputFile
+    """
+    photo = InputFile(photo_path)
+    return await settings.BOT.send_photo(
+        chat_id=user_id,
+        photo=photo,
+        caption=caption
+    )
 
 
 async def send_telegram_dump():
@@ -62,7 +73,8 @@ def send_telegram_message(user_id, message):
 
 @shared_task(bind=True)
 def dumpdata_and_send_to_telegram(self):
-     asyncio.run(send_telegram_dump())
+    asyncio.run(send_telegram_dump())
+
 
 @shared_task
 def send_mass_telegram(text=None, file_data=None, file_name=None, is_image=False):
@@ -77,22 +89,47 @@ def send_mass_telegram(text=None, file_data=None, file_name=None, is_image=False
 
                     if is_image:
                         await settings.BOT.send_photo(
-                            chat_id=user.user_id,
-                            photo=file_input,
-                            caption=text or None
+                            chat_id=user.user_id, photo=file_input, caption=text or None
                         )
                     else:
                         await settings.BOT.send_document(
                             chat_id=user.user_id,
                             document=file_input,
-                            caption=text or None
+                            caption=text or None,
                         )
                 elif text:
-                    await settings.BOT.send_message(
-                        chat_id=user.user_id,
-                        text=text
-                    )
+                    await settings.BOT.send_message(chat_id=user.user_id, text=text)
             except Exception as e:
                 logger.error(f"Ошибка при отправке пользователю {user.user_id}: {e}")
 
     asyncio.run(send_all())
+
+
+async def send_arrived_message(order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        user = order.customer
+        pickup = order.pickup_point
+
+        # Красивое сообщение
+        message = (
+            f"ℹ️ Обновление статуса заказа #{order.id}\n\n"
+            f"📦 Ваш заказ готов к выдаче! Вы можете забрать его в выбранном пункте выдачи.\n\n"
+            f"🛒 Маркетплейс: {pickup.get_marketplace_display()}\n"
+            f"📍 Пункт выдачи: {pickup.address}"
+            f"🗄  Ячейка №{user.id}"
+        )
+
+        # Если есть штрихкод — отправляем картинкой с подписью
+        if order.barcode_image:
+            await send_photo(user.user_id, order.barcode_image.path, caption=message)
+        else:
+            await send_message(user.user_id, message)
+
+        logger.info(f"Уведомление отправлено заказу {order.id}")
+    except Order.DoesNotExist:
+        logger.warning(f"Заказ {order_id} не найден")
+
+@shared_task
+def send_order_arrived_notification(order_id):
+    return asyncio.run(send_arrived_message(order_id))

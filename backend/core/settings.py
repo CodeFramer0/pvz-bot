@@ -141,7 +141,9 @@ CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "django-cache"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TASK_TIME_LIMIT = 60 * 60  # Увеличьте до 1 часа, если задачи занимают много времени
+CELERY_TASK_TIME_LIMIT = (
+    60 * 60
+)  # Увеличьте до 1 часа, если задачи занимают много времени
 CELERY_SOFT_TIME_LIMIT = 55 * 60  # Мягкий лимит времени для завершения задачи
 
 
@@ -168,5 +170,3 @@ CELERY_BEAT_SCHEDULE = {
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
 }
-
-

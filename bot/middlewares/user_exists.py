@@ -66,7 +66,7 @@ class UserExistsMiddleware(BaseMiddleware):
             body={
                 "name": callback_query.from_user.full_name,
                 "nick_name": nick_name,
-                "user_id": user_id
+                "user_id": user_id,
             },
         )
         data["user"] = user
