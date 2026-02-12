@@ -1,6 +1,63 @@
+version: "3.9"
+
+volumes:
+  traefik_data:
+  postgres_data:
+  redis_data:
+  minio_data:
+
 services:
+  # ---------------- Traefik ----------------
+  traefik:
+    image: traefik:latest
+    container_name: pvz-traefik
+    restart: always
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      # - "--log.level=DEBUG"
+      - "--accesslog=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+
+  # ---------------- PostgreSQL ----------------
+  db:
+    container_name: pvz-db
+    image: postgres:16.2
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------- Redis ----------------
+  redis:
+    container_name: pvz-redis
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------- Django Web ----------------
   web:
-    container_name: pvz_django
+    container_name: pvz-django
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -12,14 +69,10 @@ services:
         python manage.py migrate django_celery_beat &&
         python manage.py migrate django_celery_results &&
         python manage.py collectstatic --noinput &&
-        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 1 --threads 2 --timeout 300
+        gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 2 --timeout 300
       "
     volumes:
-      - static:/backend/static
-      - media:/backend/media
-      - ./backend/robot/migrations:/backend/robot/migrations
-    expose:
-      - 8000
+      - ./backend:/backend
     env_file:
       - .env
     depends_on:
@@ -27,117 +80,39 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://web:8000/api/v1/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: "512M"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pvz.rule=Host(`pvz.localhost`)"
+      - "traefik.http.routers.pvz.entrypoints=web"
+      - "traefik.http.services.pvz.loadbalancer.server.port=8000"
 
-  db:
-    container_name: pvz_db
-    image: postgres:16.2
-    restart: always
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    ports:
-      - 5433:5432
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "512M"
-
-  redis:
-    user: root
-    container_name: pvz_redis
-    image: redis:5-alpine
-    restart: always
-    volumes:
-      - ./redis_data:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: "128M"
-    # command: redis-server --save 60 1 --dir /data
-  nginx:
-    container_name: pvz_nginx
-    build: ./nginx
-    restart: always
-    volumes:
-      - static:/backend/static
-      - media:/backend/media
-    ports:
-      - 80:80
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    depends_on:
-      web:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://web:8000"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "256M"
-
+  # ---------------- Bot ----------------
   bot:
-    container_name: pvz_bot
-    build: ./bot
+    container_name: pvz-bot
+    build:
+      context: ./bot
     restart: always
     env_file:
       - .env
     command: python runbot.py
     depends_on:
       web:
-        condition: service_healthy
+        condition: service_started
       redis:
         condition: service_healthy
       db:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "256M"
 
-  celery_worker:
-    container_name: pvz_celery_worker
+  # ---------------- Celery Worker ----------------
+  celery-worker:
+    container_name: pvz-celery-worker
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
     command: celery -A core worker -l info --concurrency=1
     volumes:
-      - static:/backend/static
-      - media:/backend/media 
-      - ./backend/robot/migrations:/backend/robot/migrations
+      - ./backend:/backend
     env_file:
       - .env
     depends_on:
@@ -145,25 +120,17 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-      web:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "256M"
 
-  celery_beat:
-    container_name: pvz_celery_beat
+  # ---------------- Celery Beat ----------------
+  celery-beat:
+    container_name: pvz-celery-beat
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
     command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --max-interval=30
     volumes:
-      - static:/backend/static
-      - media:/backend/media
-      - ./backend/robot/migrations:/backend/robot/migrations
+      - ./backend:/backend
     env_file:
       - .env
     depends_on:
@@ -171,16 +138,63 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-      web:
-        condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: "256M"
 
-volumes:
-  postgres_data:
-  static:
-  media:
-  redis_data:
+  # ---------------- MinIO ----------------
+  minio:
+    image: minio/minio:latest
+    container_name: pvz-minio
+    restart: always
+    env_file: .env
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password}
+      MINIO_DOMAIN: "s3.localhost"
+      MINIO_BROWSER_REDIRECT_URL: "http://console.s3.localhost"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+    labels:
+          - "traefik.enable=true"
+          
+          # Основной API S3
+          - "traefik.http.routers.minio-api.rule=Host(`s3.localhost`)"
+          - "traefik.http.routers.minio-api.entrypoints=web"
+          - "traefik.http.routers.minio-api.service=minio-api-svc"
+
+          # ПОДДОМЕНЫ ДЛЯ СТАТИКИ И МЕДИА
+          # Мы объединяем их в один роутер, который смотрит на порт 9000
+          - "traefik.http.routers.minio-static.rule=Host(`static.s3.localhost`) || Host(`media.s3.localhost`)"
+          - "traefik.http.routers.minio-static.entrypoints=web"
+          - "traefik.http.routers.minio-static.service=minio-api-svc"
+
+          # Консоль управления
+          - "traefik.http.routers.minio-console.rule=Host(`console.s3.localhost`)"
+          - "traefik.http.routers.minio-console.entrypoints=web"
+          - "traefik.http.routers.minio-console.service=minio-console-svc"
+
+          # СЕРВИСЫ (Порты)
+          - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+          - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
+  # ---------------- MinIO Init ----------------
+  minio-init:
+    image: minio/mc:latest
+    container_name: pvz-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MC_ALIAS_NAME: myminio
+      MC_URL: ${MINIO_INTERNAL_ENDPOINT}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET_STATIC: ${MINIO_BUCKET_STATIC}
+      MINIO_BUCKET_MEDIA: ${MINIO_BUCKET_MEDIA}
+      MINIO_BUCKET_DBBACKUP: ${MINIO_BUCKET_DBBACKUP}
+    volumes:
+      - ./minio_init.sh:/minio_init.sh
+    entrypoint: ["/bin/sh", "/minio_init.sh"]

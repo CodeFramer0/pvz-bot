@@ -1,26 +1,25 @@
-FROM python:3.11
+FROM python:3.11-slim AS dev
 
-ARG SECRET_KEY
-ARG DEBUG
-ARG BOT_TOKEN
-ARG BOT_NAME
-
-ENV BOT_TOKEN=${BOT_TOKEN}
-ENV BOT_NAME=${BOT_NAME}
-ENV SECRET_KEY=${SECRET_KEY}
-ENV DEBUG=${DEBUG}
-
-
+ENV POETRY_VERSION=1.8.2
 WORKDIR /backend
 
-COPY ./requirements.txt ./
+# Системные зависимости для сборки всех пакетов (dev + prod)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libffi-dev \
+    python3-dev \
+    curl \
+    postgresql-client \
+    netcat-openbsd \
+    git \
+    && curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /root/.local/bin/poetry /usr/local/bin/poetry \
+    && poetry config virtualenvs.create false \
+    && apt-get clean
 
-
-RUN pip install --no-cache-dir -r requirements.txt
-  
-
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --no-interaction --no-ansi  # устанавливаем и dev-зависимости
 
 COPY . .
-# ENTRYPOINT ["sh", "entrypoint.sh"]
-
-EXPOSE 8000
+CMD ["pytest", "--maxfail=1", "--disable-warnings", "-q"]

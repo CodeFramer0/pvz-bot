@@ -1,55 +1,64 @@
-import logging
-import os
-from datetime import timedelta
 from pathlib import Path
-
-from aiogram import Bot
 from environs import Env
 
+# ==================================================
+# INITIALIZATION
+# ==================================================
 env = Env()
 env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+# ==================================================
+# CORE SETTINGS
+# ==================================================
 SECRET_KEY = env.str("SECRET_KEY")
-os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
+DEBUG = env.bool("DEBUG", True)
 
-DEBUG = env.bool("DEBUG")
-
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 BOT_TOKEN = env.str("BOT_TOKEN")
-BOT_NAME = env.str("BOT_NAME")
-DUMP_CHAT_ID = env.str("DUMP_CHAT_ID")
-BOT = Bot(token=BOT_TOKEN)
+PROTOCOL = env.str("PROTOCOL", "http")
 
-logging.basicConfig(
-    format="%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s",
-    level=logging.INFO,
-)
+ALLOWED_HOSTS = ["*"]  # На проде лучше заменить на конкретные домены
+
+ROOT_URLCONF = "core.urls"
+WSGI_APPLICATION = "core.wsgi.application"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+
+# ==================================================
+# APPS DEFINITION
+# ==================================================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "robot.apps.RobotConfig",
     "django.contrib.staticfiles",
+    
+    # Third-party
+    "csp",
+    "corsheaders",
+    "django_cleanup.apps.CleanupConfig",
     "rest_framework",
     "rest_framework.authtoken",
-    "rangefilter",
-    "API",
+    "django_filters",
     "django_celery_beat",
     "django_celery_results",
-    "django_filters",
+    
+    # Local Apps
+    "robot",
 ]
 
+# ==================================================
+# MIDDLEWARE
+# ==================================================
 MIDDLEWARE = [
+    "csp.middleware.CSPMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -57,12 +66,96 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "core.urls"
+# ==================================================
+# DATABASE & CACHE
+# ==================================================
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env.str("POSTGRES_DB"),
+        "USER": env.str("POSTGRES_USER"),
+        "PASSWORD": env.str("POSTGRES_PASSWORD"),
+        "HOST": "pvz-db",
+        "PORT": env.int("DB_PORT", 5432),
+    }
+}
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://pvz-redis:6379/1",
+    }
+}
 
+# ==================================================
+# STATIC & MEDIA (MinIO S3)
+# ==================================================
+MINIO_ENDPOINT = "http://minio:9000"
+MINIO_DOMAIN = env.str("MINIO_DOMAIN")
+
+
+MEDIA_URL = f"{PROTOCOL}://media.{MINIO_DOMAIN}/"
+STATIC_URL = f"{PROTOCOL}://static.{MINIO_DOMAIN}/"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "core.storages_backends.MediaStorage",
+        "OPTIONS": {
+            "endpoint_url": MINIO_ENDPOINT,
+            "access_key": env.str("MINIO_ROOT_USER"),
+            "secret_key": env.str("MINIO_ROOT_PASSWORD"),
+            "bucket_name": "media",
+            "custom_domain": f"media.{MINIO_DOMAIN}",
+            "querystring_auth": True,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "core.storages_backends.StaticStorage",
+        "OPTIONS": {
+            "endpoint_url": MINIO_ENDPOINT,
+            "access_key": env.str("MINIO_ROOT_USER"),
+            "secret_key": env.str("MINIO_ROOT_PASSWORD"),
+            "bucket_name": "static",
+            "custom_domain": f"static.{MINIO_DOMAIN}",
+            "querystring_auth": False,
+        },
+    },
+}
+
+# ==================================================
+# SECURITY / CSP / CORS
+# ==================================================
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost",
+    "http://pvz.localhost",
+    f"http://{MINIO_DOMAIN}",
+]
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", f"static.{MINIO_DOMAIN}"],
+        "style-src": ["'self'", "'unsafe-inline'", f"static.{MINIO_DOMAIN}"],
+        "img-src": ["'self'", "data:", f"media.{MINIO_DOMAIN}", f"static.{MINIO_DOMAIN}"],
+        "font-src": ["'self'", f"static.{MINIO_DOMAIN}"],
+        "connect-src": ["'self'", "pvz.localhost", "pvz.ru", f"static.{MINIO_DOMAIN}"],
+        "frame-src": ["'self'"],
+    }
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# ==================================================
+# TEMPLATES & I18N
+# ==================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -72,101 +165,32 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
         },
-    },
+    }
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
-
-
-DATABASES = {
-    "default": {
-        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
-        "NAME": os.environ.get("SQL_DATABASE", BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("SQL_USER", "user"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
-        "HOST": os.environ.get("SQL_HOST", "localhost"),
-        "PORT": os.environ.get("SQL_PORT", "5432"),
-    }
-}
-
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-    }
-}
-
-
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
-SESSION_COOKIE_SECURE = False  # True для HTTPS
-CSRF_COOKIE_SECURE = False  # True для HTTPS
-SESSION_COOKIE_SAMESITE = "Lax"  # Или 'None'
-
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-
-
-LANGUAGE_CODE = "ru-RU"
-
+LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Asia/Yekaterinburg"
-
 USE_I18N = True
-
 USE_TZ = True
 
-CELERY_TIMEZONE = "Asia/Yekaterinburg"
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 30 * 60
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
-CELERY_RESULT_BACKEND = "django-db"
-CELERY_CACHE_BACKEND = "django-cache"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TASK_TIME_LIMIT = (
-    60 * 60
-)  # Увеличьте до 1 часа, если задачи занимают много времени
-CELERY_SOFT_TIME_LIMIT = 55 * 60  # Мягкий лимит времени для завершения задачи
-
-
-# Новая настройка для Celery 6.0 и выше
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-STATIC_URL = "/static/"
-
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = "/media/"
-
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CELERY_BEAT_SCHEDULE = {
-    "dumpdata-and-send-to-telegram-daily": {
-        "task": "robot.tasks.dumpdata_and_send_to_telegram",
-        "schedule": timedelta(hours=24),
-    },
-}
+# ==================================================
+# CELERY & REST FRAMEWORK
+# ==================================================
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"]
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+
+# ==================================================
+# AUTH & LOGIN
+# ==================================================
+LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/admin/"

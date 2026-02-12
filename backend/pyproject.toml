@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "pvz-backend"
+version = "0.1.74"
+description = "pvz-backend"
+authors = ["CodeFramer <52332286+CodeFramer0@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Django = "5.2.5"
+djangorestframework = "^3.15.1"
+django-filter = "^24.2"
+drf-extra-fields = "^3.7.0"
+psycopg2 = "^2.9.9"
+environs = "^9.5.0"
+gunicorn = "^23.0.0"
+pillow = "^10.3.0"
+marshmallow = "<3.20.0"
+django-admin-rangefilter = "^0.13.3"
+celery = "^5.3.6"
+django-celery-results = "^2.5.1"
+django-celery-beat = "^2.6.0"
+django-redis = "^5.4.0"
+redis = "^5.0.4"
+requests = "^2.32.3"
+aiohttp = "3.8.6"
+yarl = "^1.9.4"
+frozenlist = "^1.4.1"
+aiogram = "^2.25.1"
+django-storages = { extras = ["s3"], version = "^1.14.6" }
+pymorphy3 = "^2.0.4"
+django-dbbackup = "^4.3.0"
+pyjwt = "^2.10.1"
+djangorestframework-simplejwt = "^5.5.1"
+pytest = "^8.4.1"
+pytest-django = "^4.11.1"
+django-csp = "^4.0"
+django-cleanup = "^9.0.0"
+pandas = "2.3.3"
+django-cors-headers = "4.9.0"
+openpyxl = "^3.1.5"
+
+[tool.poetry.group.dev.dependencies]
+freezegun = "^1.5.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+python_files = ["test_*.py", "*_tests.py", "tests.py"]
+addopts = "-v --reuse-db"
+package-mode = false

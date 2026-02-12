@@ -1,21 +1,20 @@
-FROM python:3.11
+FROM python:3.11-slim AS dev
 
 WORKDIR /bot
 
-# Установка аргументов
-ARG BOT_TOKEN
-ARG BOT_NAME
-ARG API_URL
-ARG API_TOKEN
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libffi-dev \
+    python3-dev \
+    curl \
+    git \
+    && curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /root/.local/bin/poetry /usr/local/bin/poetry \
+    && poetry config virtualenvs.create false \
+    && apt-get clean
 
-# Установка переменных окружения
-ENV BOT_TOKEN=${BOT_TOKEN}
-ENV BOT_NAME=${BOT_NAME}
-ENV API_URL=${API_URL}
-ENV API_TOKEN=${BACKEND_API_TOKEN}
-
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml poetry.lock ./
+RUN poetry install --no-interaction --no-ansi
 
 COPY . .
-
