@@ -1,4 +1,6 @@
+from datetime import timedelta
 from pathlib import Path
+
 from environs import Env
 
 # ==================================================
@@ -18,12 +20,10 @@ DEBUG = env.bool("DEBUG", True)
 BOT_TOKEN = env.str("BOT_TOKEN")
 PROTOCOL = env.str("PROTOCOL", "http")
 
-ALLOWED_HOSTS = ["*"]  # На проде лучше заменить на конкретные домены
-
+ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "core.urls"
 WSGI_APPLICATION = "core.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 
 # ==================================================
@@ -36,19 +36,20 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
+    "django_extensions",
     # Third-party
+    "rest_framework_simplejwt",
     "csp",
     "corsheaders",
-    "django_cleanup.apps.CleanupConfig",
     "rest_framework",
-    "rest_framework.authtoken",
     "django_filters",
     "django_celery_beat",
     "django_celery_results",
-    
+    "drf_spectacular",
+    "django_prometheus",
     # Local Apps
     "robot",
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 # ==================================================
@@ -64,6 +65,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
 # ==================================================
@@ -79,6 +82,7 @@ DATABASES = {
         "PORT": env.int("DB_PORT", 5432),
     }
 }
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -91,7 +95,6 @@ CACHES = {
 # ==================================================
 MINIO_ENDPOINT = "http://minio:9000"
 MINIO_DOMAIN = env.str("MINIO_DOMAIN")
-
 
 MEDIA_URL = f"{PROTOCOL}://media.{MINIO_DOMAIN}/"
 STATIC_URL = f"{PROTOCOL}://static.{MINIO_DOMAIN}/"
@@ -135,14 +138,51 @@ CSRF_TRUSTED_ORIGINS = [
     f"http://{MINIO_DOMAIN}",
 ]
 
+# Swagger UI CDN от Swagger (unpkg)
+SWAGGER_CDN = "https://unpkg.com/swagger-ui-dist@4"
+REDOC_CDN = "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"
+
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": ["'self'"],
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", f"static.{MINIO_DOMAIN}"],
-        "style-src": ["'self'", "'unsafe-inline'", f"static.{MINIO_DOMAIN}"],
-        "img-src": ["'self'", "data:", f"media.{MINIO_DOMAIN}", f"static.{MINIO_DOMAIN}"],
-        "font-src": ["'self'", f"static.{MINIO_DOMAIN}"],
-        "connect-src": ["'self'", "pvz.localhost", "pvz.ru", f"static.{MINIO_DOMAIN}"],
+        "script-src": [
+            "'self'",
+            "'unsafe-inline'",
+            "'unsafe-eval'",
+            "https://unpkg.com",  # Swagger UI
+            "https://cdn.jsdelivr.net",  # ReDoc
+            "https://fonts.googleapis.com",
+            f"static.{MINIO_DOMAIN}",
+        ],
+        "style-src": [
+            "'self'",
+            "'unsafe-inline'",
+            "https://unpkg.com",  # Swagger UI styles
+            f"static.{MINIO_DOMAIN}",
+            "https://fonts.googleapis.com",
+        ],
+        "img-src": [
+            "'self'",
+            "data:",
+            "https://unpkg.com",
+            "https://fonts.googleapis.com",
+            f"media.{MINIO_DOMAIN}",
+            f"static.{MINIO_DOMAIN}",
+        ],
+        "font-src": [
+            "'self'",
+            "https://unpkg.com",
+            "https://fonts.googleapis.com",
+            f"static.{MINIO_DOMAIN}",
+        ],
+        "connect-src": [
+            "'self'",
+            "pvz.localhost",
+            "https://unpkg.com",
+            "https://fonts.googleapis.com",
+            "https://cdn.jsdelivr.net",
+            f"static.{MINIO_DOMAIN}",
+        ],
         "frame-src": ["'self'"],
     }
 }
@@ -174,23 +214,84 @@ USE_I18N = True
 USE_TZ = True
 
 # ==================================================
-# CELERY & REST FRAMEWORK
+# CELERY
 # ==================================================
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
+# ==================================================
+# REST FRAMEWORK
+# ==================================================
 REST_FRAMEWORK = {
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
+# ==================================================
+# JWT CONFIGURATION
+# ==================================================
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+}
 
 # ==================================================
-# AUTH & LOGIN
+# AUTH
 # ==================================================
+AUTH_USER_MODEL = "robot.AppUser"
 LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
+
+# ==================================================
+# DRF SPECTACULAR (Swagger/OpenAPI)
+# ==================================================
+SPECTACULAR_SETTINGS = {
+    "TITLE": "PVZ Bot API",
+    "DESCRIPTION": "",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    # Swagger UI от Swagger (официальный CDN)
+    "SWAGGER_UI_DIST": "https://unpkg.com/swagger-ui-dist@4",
+    "SWAGGER_UI_FAVICON_URL": "https://unpkg.com/swagger-ui-dist@4/favicon-32x32.png",
+    # ReDoc
+    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
+    # UI Settings
+    "SWAGGER_UI_SETTINGS": {
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "filter": True,
+        "showExtensions": True,
+        "deepLinking": True,
+        "defaultModelsExpandDepth": 1,
+        "docExpansion": "list",
+    },
+    # Security
+    "SECURITY": [{"bearerAuth": []}],
+}

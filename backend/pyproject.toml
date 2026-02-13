@@ -39,6 +39,9 @@ django-cleanup = "^9.0.0"
 pandas = "2.3.3"
 django-cors-headers = "4.9.0"
 openpyxl = "^3.1.5"
+django-prometheus = "^2.4.1"
+django-extensions = "^4.1"
+drf-spectacular = {extras = ["sidecar"], version = "^0.29.0"}
 
 [tool.poetry.group.dev.dependencies]
 freezegun = "^1.5.5"

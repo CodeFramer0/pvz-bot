@@ -29,16 +29,13 @@ def expire_old_orders():
 async def send_message(user_id, message):
     return await settings.BOT.send_message(chat_id=user_id, text=message)
 
+
 async def send_photo(user_id, photo_path, caption: str = None):
     """
     Отправка фото через InputFile
     """
     photo = InputFile(photo_path)
-    return await settings.BOT.send_photo(
-        chat_id=user_id,
-        photo=photo,
-        caption=caption
-    )
+    return await settings.BOT.send_photo(chat_id=user_id, photo=photo, caption=caption)
 
 
 async def send_telegram_dump():
@@ -129,6 +126,7 @@ async def send_arrived_message(order_id):
         logger.info(f"Уведомление отправлено заказу {order.id}")
     except Order.DoesNotExist:
         logger.warning(f"Заказ {order_id} не найден")
+
 
 @shared_task
 def send_order_arrived_notification(order_id):

@@ -1,27 +1,50 @@
+import uuid
+
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 
-class TelegramUser(models.Model):
-    name = models.CharField(verbose_name="Имя", max_length=512, default="NoName")
-    nick_name = models.CharField(verbose_name="Ник", max_length=32, default="NoName")
-    date_join = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата и время создания"
-    )
-    user_id = models.CharField(max_length=100, verbose_name="User ID", unique=True)
-    is_blocked = models.BooleanField(default=False, verbose_name="Заблокирован")
-    is_administrator = models.BooleanField(
-        default=False,
-        verbose_name="Является администратором",
-    )
+class AppUser(AbstractUser):
+    email_verified = models.BooleanField(default=False)
+    verification_code = models.CharField(max_length=6, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
+        verbose_name = "App пользователь"
+        verbose_name_plural = "App пользователи"
 
     def __str__(self):
-        return f"{self.nick_name} - {self.name} - {self.user_id}"
+        return f"{self.username} ({self.email})"
+
+
+class TelegramUser(models.Model):
+    """Telegram пользователь - привязан к AppUser"""
+
+    app_user = models.OneToOneField(
+        AppUser,
+        on_delete=models.CASCADE,
+        related_name="telegram_user",
+        null=True,
+        blank=True,
+        verbose_name="Привязанный app пользователь",
+    )
+    name = models.CharField(verbose_name="Имя", max_length=512, default="NoName")
+    nick_name = models.CharField(verbose_name="Ник", max_length=32, default="NoName")
+    date_join = models.DateTimeField(auto_now_add=True)
+    user_id = models.CharField(
+        max_length=100, verbose_name="Telegram User ID", unique=True
+    )
+    is_blocked = models.BooleanField(default=False)
+    is_administrator = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Telegram пользователь"
+        verbose_name_plural = "Telegram пользователи"
+
+    def __str__(self):
+        return f"{self.nick_name} - {self.name}"
 
 
 class PickupPoint(models.Model):
@@ -66,7 +89,7 @@ class Order(models.Model):
     ]
 
     customer = models.ForeignKey(
-        TelegramUser,
+        AppUser,  # Меняем на AppUser вместо TelegramUser
         on_delete=models.CASCADE,
         related_name="orders",
         verbose_name="Пользователь",

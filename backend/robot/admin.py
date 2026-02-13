@@ -35,14 +35,15 @@ class PickupPointAdmin(admin.ModelAdmin):
     search_fields = ("address",)
     ordering = ("marketplace", "address")
 
+
 class StatusFilter(admin.SimpleListFilter):
     title = _("Статус")
     parameter_name = "status"
 
     def lookups(self, request, model_admin):
         return (
-            ("not_ready", _("Не готовы к выдаче")),   # кастомная группа
-            ("pending", _("Ожидают")),                # конкретный статус
+            ("not_ready", _("Не готовы к выдаче")),  # кастомная группа
+            ("pending", _("Ожидают")),  # конкретный статус
             ("completed", _("Собраны и погружены на ближайшую доставку")),
             ("barcode_expired", _("Штрих код устарел")),
             ("not_arrived_goods", _("Товары еще не в Анастасиевке")),
@@ -57,10 +58,11 @@ class StatusFilter(admin.SimpleListFilter):
         if self.value() == "not_ready":
             return queryset.exclude(status="arrived")  # все, кроме готовых
         if self.value() == "pending":
-            return queryset.filter(status="pending")   # только pending
+            return queryset.filter(status="pending")  # только pending
         if self.value():
             return queryset.filter(status=self.value())
         return queryset
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -115,7 +117,9 @@ class OrderAdmin(admin.ModelAdmin):
 
     actions = ["mark_as_arrived"]
 
-    @admin.action(description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента")
+    @admin.action(
+        description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента"
+    )
     def mark_as_arrived(self, request, queryset):
         # Проверяем, что поле status корректное
         pending_orders = queryset.exclude(status="arrived")
