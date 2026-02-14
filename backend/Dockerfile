@@ -2,7 +2,7 @@ FROM python:3.11-slim AS dev
 
 ENV POETRY_VERSION=1.8.2
 WORKDIR /backend
-
+ENV PYTHONUNBUFFERED=1
 # Системные зависимости для сборки всех пакетов (dev + prod)
 RUN apt-get update && apt-get install -y \
     build-essential \

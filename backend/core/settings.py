@@ -1,3 +1,5 @@
+import logging
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -8,6 +10,49 @@ from environs import Env
 # ==================================================
 env = Env()
 env.read_env()
+
+
+# ==================================================
+# LOGGING
+# ==================================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{levelname}] {asctime} - {name} - {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+        "simple": {
+            "format": "[{levelname}] {name} - {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "robot": {  # Ваше приложение
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -226,7 +271,6 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_FILTER_BACKENDS": (
@@ -234,8 +278,8 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
+    # "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    # "PAGE_SIZE": 20,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -273,25 +317,45 @@ LOGIN_REDIRECT_URL = "/admin/"
 # ==================================================
 SPECTACULAR_SETTINGS = {
     "TITLE": "PVZ Bot API",
-    "DESCRIPTION": "",
+    "DESCRIPTION": "API для управления пунктами выдачи",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
-    # Swagger UI от Swagger (официальный CDN)
+
+    # Swagger UI
     "SWAGGER_UI_DIST": "https://unpkg.com/swagger-ui-dist@4",
     "SWAGGER_UI_FAVICON_URL": "https://unpkg.com/swagger-ui-dist@4/favicon-32x32.png",
-    # ReDoc
-    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
-    # UI Settings
     "SWAGGER_UI_SETTINGS": {
-        "persistAuthorization": True,
+        "persistAuthorization": True,  # ← сохраняет токен между перезагрузками Swagger
         "displayOperationId": True,
         "filter": True,
         "showExtensions": True,
         "deepLinking": True,
         "defaultModelsExpandDepth": 1,
         "docExpansion": "list",
+        "tryItOutEnabled": True,
     },
-    # Security
+
+    # ReDoc
+    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
+
+    # SECURITY - добавляет кнопку AUTHORIZE
     "SECURITY": [{"bearerAuth": []}],
+    "COMPONENTS": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT Authorization header using Bearer token",
+            }
+        }
+    },
 }
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Эти настройки можно оставить, хоть они не используются
+EMAIL_HOST = "localhost"
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = "noreply@pvz.localhost"

@@ -1,6 +1,6 @@
 import { useAuthStore } from 'src/stores/auth-store'
 
-const API_BASE_URL = '/api/v1'
+const API_BASE_URL = 'http://pvz.localhost/api/v1/'
 
 class ApiClient {
   constructor() {

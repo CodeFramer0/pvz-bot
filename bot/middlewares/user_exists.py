@@ -1,72 +1,52 @@
-import logging
-
-from aiogram import types
 from aiogram.dispatcher.middlewares import BaseMiddleware
+from loader import jwt_client
 from api import TelegramUserAPI
 
-
-class UserExistsMiddleware(BaseMiddleware):
+class EnsureUserMiddleware(BaseMiddleware):
     def __init__(self):
+        """
+        :param storage: RedisStorage2
+        :param user_ttl_days: Если задано, пользователи будут удаляться из Redis после указанного кол-ва дней
+        """
         super().__init__()
-        self.api = TelegramUserAPI()
+        self.api = TelegramUserAPI(jwt_client)
 
-    async def on_pre_process_message(self, message: types.Message, data: dict):
-        user_id = message.from_user.id
+    async def _get_or_create_or_update(self, tg_user):
+        user_id = tg_user.id
+        nick_name = tg_user.username or "NoName"
+
         user = await self.api.get(params={"user_id": user_id})
-        nick_name = message.from_user.username
-
-        if not nick_name:
-            nick_name = "NoName"
 
         if not user:
-            user = await self.api.create(
+            # создаём нового
+            new_user = await self.api.create(
                 body={
-                    "name": message.from_user.full_name,
+                    "name": tg_user.full_name,
                     "nick_name": nick_name,
                     "user_id": user_id,
                 }
             )
 
-            data["user"] = user
-            return
+            return new_user
 
-        user = await self.api.update(
-            id=user["id"],
-            body={
-                "user_id": message.from_user.id,
-                "name": message.from_user.full_name,
-                "nick_name": nick_name,
-            },
+        need_update = (
+            user["name"] != tg_user.full_name or user["nick_name"] != nick_name
         )
-
-        data["user"] = user
-        return
-
-    async def on_pre_process_callback_query(
-        self, callback_query: types.CallbackQuery, data: dict
-    ):
-        user_id = callback_query.from_user.id
-        user = await self.api.get(params={"user_id": user_id})
-
-        nick_name = callback_query.from_user.username
-
-        if not nick_name:
-            nick_name = "NoName"
-
-        if not user:
-            user = await self.api.create(
+        if need_update:
+            return await self.api.update(
+                id=user["id"],
                 body={
-                    "name": f"{callback_query.from_user.full_name}",
+                    "user_id": user_id,
+                    "name": tg_user.full_name,
                     "nick_name": nick_name,
-                    "chat_id": user_id,
-                }
+                },
             )
-        user = await self.api.update(
-            id=user["id"],
-            body={
-                "name": callback_query.from_user.full_name,
-                "nick_name": nick_name,
-                "user_id": user_id,
-            },
-        )
-        data["user"] = user
+
+        return user
+
+
+    async def on_pre_process_message(self, message, data: dict):
+        data["user"] = await self._get_or_create_or_update(message.from_user)
+
+    async def on_pre_process_callback_query(self, callback_query, data: dict):
+        data["user"] = await self._get_or_create_or_update(callback_query.from_user)

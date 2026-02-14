@@ -7,6 +7,7 @@ class TelegramUserFilter(filters.FilterSet):
     nick_name = filters.CharFilter(field_name="nick_name", lookup_expr="icontains")
     is_administrator = filters.BooleanFilter()
     is_blocked = filters.BooleanFilter()
+    user_id = filters.NumberFilter(field_name="user_id", lookup_expr="exact")
 
     class Meta:
         model = TelegramUser

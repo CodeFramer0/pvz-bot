@@ -21,20 +21,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/orders',
-    name: 'Orders',
-    component: () => import('pages/OrdersPage.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/add-order',
+    path: '/add',
     name: 'AddOrder',
     component: () => import('pages/AddOrder.vue'),
     meta: { requiresAuth: true }
   },
   {
     path: '/',
-    redirect: '/orders'
+    name: 'index',
+    component: () => import('pages/IndexPage.vue'),
+    meta: { requiresAuth: true }
+
+
   }
 ]
 
@@ -59,7 +57,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
-    next('/orders')
+    next('/')
   } else {
     next()
   }
