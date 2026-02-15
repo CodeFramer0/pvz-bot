@@ -1,6 +1,6 @@
 import { useAuthStore } from 'src/stores/auth-store'
 
-const API_BASE_URL = 'http://pvz.localhost/api/v1/'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 class ApiClient {
   constructor() {
@@ -10,11 +10,8 @@ class ApiClient {
 
   processQueue(error, token = null) {
     this.failedQueue.forEach(prom => {
-      if (error) {
-        prom.reject(error)
-      } else {
-        prom.resolve(token)
-      }
+      if (error) prom.reject(error)
+      else prom.resolve(token)
     })
     this.failedQueue = []
   }
@@ -23,10 +20,10 @@ class ApiClient {
     const authStore = useAuthStore()
 
     const headers = {
-      'Content-Type': 'application/json',
       ...options.headers
     }
 
+    // Добавляем токен, если есть
     if (authStore.accessToken) {
       headers['Authorization'] = `Bearer ${authStore.accessToken}`
     }
@@ -37,17 +34,15 @@ class ApiClient {
         headers
       })
 
-      // Если 401 и есть refresh token - пытаемся обновить
+      // Обработка 401 + refresh
       if (response.status === 401 && authStore.refreshToken) {
         if (!this.isRefreshing) {
           this.isRefreshing = true
-
           try {
             await authStore.refreshAccessToken()
             this.isRefreshing = false
             this.processQueue(null, authStore.accessToken)
 
-            // Повторяем запрос с новым токеном
             headers['Authorization'] = `Bearer ${authStore.accessToken}`
             response = await fetch(`${API_BASE_URL}${endpoint}`, {
               ...options,
@@ -60,7 +55,6 @@ class ApiClient {
             throw error
           }
         } else {
-          // Ждем пока другой запрос обновит токен
           return new Promise((resolve, reject) => {
             this.failedQueue.push({ resolve, reject })
           }).then(token => {
@@ -92,6 +86,7 @@ class ApiClient {
     return this.request(endpoint, {
       ...options,
       method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
       body: JSON.stringify(data)
     })
   }
@@ -100,12 +95,27 @@ class ApiClient {
     return this.request(endpoint, {
       ...options,
       method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
       body: JSON.stringify(data)
     })
   }
 
   async delete(endpoint, options = {}) {
     return this.request(endpoint, { ...options, method: 'DELETE' })
+  }
+
+  // ✅ Новый postMultipart
+  async postMultipart(endpoint, formData, options = {}) {
+    const authStore = useAuthStore()
+    const headers = { ...options.headers } // не ставим Content-Type!
+    if (authStore.accessToken) headers['Authorization'] = `Bearer ${authStore.accessToken}`
+
+    return this.request(endpoint, {
+      ...options,
+      method: 'POST',
+      body: formData,
+      headers
+    })
   }
 }
 

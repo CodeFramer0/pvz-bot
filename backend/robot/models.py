@@ -13,7 +13,8 @@ class AppUser(AbstractUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email_verified = models.BooleanField(default=False)
-
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []
     class Meta:
         verbose_name = "App пользователь"
         verbose_name_plural = "App пользователи"

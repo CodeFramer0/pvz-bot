@@ -11,7 +11,7 @@ from ..schemas.orders import (orders_create_schema, orders_destroy_schema,
                               orders_update_status_schema)
 from ..serializers import (OrderCreateSerializer, OrderDetailSerializer,
                            OrderListSerializer)
-
+from rest_framework.parsers import MultiPartParser, FormParser
 
 @extend_schema_view(
     list=orders_list_schema,
@@ -24,12 +24,8 @@ from ..serializers import (OrderCreateSerializer, OrderDetailSerializer,
 )
 class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return Order.objects.filter(customer=self.request.user).order_by(
-            "-date_created"
-        )
-
+    parser_classes = [MultiPartParser, FormParser]
+    queryset = Order.objects.all().order_by("-date_created")
     def get_serializer_class(self):
         if self.action == "retrieve":
             return OrderDetailSerializer
@@ -51,3 +47,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
 
         return Response(OrderDetailSerializer(order).data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=["get"], url_path="my_orders")
+    def my_orders(self, request):
+        """
+        Возвращает все заказы текущего пользователя
+        """
+        orders = Order.objects.filter(customer=self.request.user).order_by("-date_created")
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

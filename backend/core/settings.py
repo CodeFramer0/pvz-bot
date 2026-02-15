@@ -181,6 +181,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://pvz.localhost",
     f"http://{MINIO_DOMAIN}",
+    'http://10.0.2.2',
 ]
 
 # Swagger UI CDN от Swagger (unpkg)

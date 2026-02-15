@@ -26,6 +26,16 @@ const routes = [
     component: () => import('pages/AddOrder.vue'),
     meta: { requiresAuth: true }
   },
+  
+  {
+    path: '/orders',
+    name: 'Orders',
+    component: () => import('pages/OrdersPage.vue'),
+    meta: { requiresAuth: true }
+
+
+  }
+,
   {
     path: '/',
     name: 'index',

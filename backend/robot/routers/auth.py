@@ -6,15 +6,13 @@ robot/routers/auth.py
 
 from django.urls import path
 
-from ..views import (CurrentUserView, EmailPasswordLoginView, LogoutView,
-                     RefreshTokenView, SendVerificationCodeView,
-                     UsernamePasswordLoginView, VerifyCodeView,
-                     VerifyTokenView)
+from ..views import (EmailTokenObtainPairView, ForgotPasswordView, LogoutView, RefreshTokenView,
+                     ResetPasswordView, SendVerificationCodeView,VerifyCodeView,
+                     VerifyTokenView,CurrentUserView)
 
 # Все auth endpoints
 urlpatterns = [
-    path("login/email/", EmailPasswordLoginView.as_view(), name="email-login"),
-    path("login/username/", UsernamePasswordLoginView.as_view(), name="username-login"),
+    path("login/email/", EmailTokenObtainPairView.as_view(), name="email-login"),
     path("refresh/", RefreshTokenView.as_view(), name="refresh-token"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("me/", CurrentUserView.as_view(), name="current-user"),
@@ -25,6 +23,8 @@ urlpatterns = [
         name="send-verification-code",
     ),
     path("verify/confirm/", VerifyCodeView.as_view(), name="verify-code"),
+    path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
+    path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
 ]
 
 __all__ = ["urlpatterns"]

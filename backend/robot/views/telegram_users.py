@@ -16,7 +16,7 @@ from ..schemas.telegram_users import (telegram_users_bind_user_schema,
                                       telegram_users_update_schema)
 from ..serializers.telegram_users import TelegramUserSerializer
 
-User = get_user_model()
+AppUser = get_user_model()
 
 
 @extend_schema_view(
@@ -53,16 +53,14 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
             )
 
         # проверка на существующий AppUser с таким email
-        if User.objects.filter(email=email).exists():
+        if AppUser.objects.filter(email=email).exists():
             return Response(
                 {"email": "Пользователь с таким email уже существует"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         password = get_random_string(12)
-        user = User.objects.create_user(
-            username=email, email=email, password=password
-        )
+        user = AppUser.objects.create_user(email=email, password=password)
 
         telegram_user.app_user = user
         telegram_user.save()

@@ -10,11 +10,11 @@
 
         <q-form @submit.prevent="onSubmit" class="q-gutter-md">
           <q-select
-            v-model="form.pickup_point"
-            label="Пункт выдачи"
+            v-model.number="form.pickup_point"
             :options="pickupOptions"
             option-label="label"
             option-value="value"
+            label="Пункт выдачи"
             outlined
             dense
             required
@@ -93,7 +93,10 @@ onMounted(async () => {
     const res = await api.get('pickup-points/')
     const data = await res.json()
     pickupPoints.value = data
-    pickupOptions.value = data.map(p => ({ label: `${p.marketplace} - ${p.address}`, value: p.id }))
+    pickupOptions.value = pickupPoints.value.map(p => ({
+      label: `${p.marketplace_display} - ${p.address}`, // "Озон - Test"
+      value: p.id
+    }))
   } catch {
     $q.notify({ color: 'negative', message: 'Не удалось загрузить пункты выдачи', position: 'top' })
   }
@@ -106,19 +109,28 @@ const onSubmit = async () => {
     $q.notify({ color: 'negative', message: 'Заполните все обязательные поля', position: 'top' })
     return
   }
+
   loading.value = true
   try {
     const data = new FormData()
-    Object.entries(form.value).forEach(([k, v]) => v && data.append(k, v))
+    data.append('pickup_point_id', form.value.pickup_point.value)
+    data.append('full_name', form.value.full_name)
+    data.append('amount', form.value.amount.toString()) // тоже string
+    data.append('barcode_image', form.value.barcode_image)
+    if (form.value.comment) data.append('comment', form.value.comment)
+
     const res = await api.postMultipart('orders/', data)
+
     if (res.ok) {
       $q.notify({ color: 'positive', message: 'Заказ создан!', position: 'top' })
-      router.push('/orders')
+      router.push('/')
     } else {
       const err = await res.json()
-      $q.notify({ color: 'negative', message: err.detail || 'Ошибка при создании заказа', position: 'top' })
+      $q.notify({ color: 'negative', message: err.pickup_point_id?.[0] || err.detail || 'Ошибка при создании заказа', position: 'top' })
     }
-  } finally { loading.value = false }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

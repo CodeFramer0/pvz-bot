@@ -8,7 +8,7 @@ from ..schemas.users import (users_create_schema, users_destroy_schema,
                              users_update_schema)
 from ..serializers import UserSerializer
 
-User = get_user_model()
+AppUser = get_user_model()
 
 
 @extend_schema_view(
@@ -20,6 +20,6 @@ User = get_user_model()
     destroy=users_destroy_schema,
 )
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = AppUser.objects.all()
     permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer  # ваш основной сериализатор AppUser

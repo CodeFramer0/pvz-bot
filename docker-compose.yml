@@ -72,10 +72,10 @@ services:
       redis:
         condition: service_healthy
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pvz.rule=Host(`pvz.localhost`)"
-      - "traefik.http.routers.pvz.entrypoints=web"
-      - "traefik.http.services.pvz.loadbalancer.server.port=8000"
+    - "traefik.enable=true"
+    - "traefik.http.routers.pvz.rule=Host(`pvz.localhost`) || Host(`localhost`) || Host(`10.0.2.2`)"
+    - "traefik.http.routers.pvz.entrypoints=web"
+    - "traefik.http.services.pvz.loadbalancer.server.port=8000"
 
   # ---------------- Bot ----------------
   bot:

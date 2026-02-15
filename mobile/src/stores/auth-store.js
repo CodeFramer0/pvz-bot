@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
 export const useAuthStore = defineStore('auth', () => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   const user = ref(null)
   const accessToken = ref(localStorage.getItem('access_token') || null)
   const refreshToken = ref(localStorage.getItem('refresh_token') || null)
@@ -23,7 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshAccessToken = async () => {
     if (!refreshToken.value) return false
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/refresh_token/', {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh_token/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken.value })
@@ -41,14 +41,28 @@ export const useAuthStore = defineStore('auth', () => {
   // --- Login ---
 const login = async (email, password) => {
   try {
-    const response = await fetch('http://pvz.localhost/api/v1/auth/login/', {
+    const response = await fetch(`${API_BASE_URL}/auth/login/email/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     })
 
     const data = await response.json()
-    return data  // возвращаем объект полностью
+
+    if (response.ok && data.status === 'success') {
+      // сохраняем токены
+      setTokens(data.access, data.refresh)
+      user.value = { id: data.user_id, email: data.email } // можно расширить полями
+      verificationNeeded.value = false
+      verificationEmail.value = ''
+      return data
+    } else if (data.status === 'verification_needed') {
+      verificationNeeded.value = true
+      verificationEmail.value = data.email
+      return data
+    } else {
+      return { status: 'error', error: data.detail || 'Ошибка входа' }
+    }
   } catch (error) {
     console.error(error)
     return { status: 'error', error: 'Ошибка запроса' }
@@ -58,7 +72,7 @@ const login = async (email, password) => {
   // --- Register ---
   const register = async (username, email, password, telegramUserId = null) => {
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/register/', {
+      const res = await fetch(`${API_BASE_URL}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password, telegram_user_id: telegramUserId })
@@ -78,31 +92,32 @@ const login = async (email, password) => {
   }
 
   // --- Verify Email ---
-  const verifyEmail = async (userId, code) => {
-    try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/verify_email/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, code })
-      })
-      if (!res.ok) return false
-      const data = await res.json()
-      setTokens(data.access, data.refresh)
-      user.value = data.user
-      verificationNeeded.value = false
-      verificationEmail.value = ''
-      return true
-    } catch (err) {
-      console.error(err)
-      return false
-    }
+const verifyEmail = async (userId, code) => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/verify_email/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, code })
+    })
+    const data = await res.json()
+    if (!res.ok) return false
+
+    setTokens(data.access, data.refresh)
+    user.value = data.user
+    verificationNeeded.value = false
+    verificationEmail.value = ''
+    return true
+  } catch (err) {
+    console.error(err)
+    return false
   }
+}
 
   // --- Resend code ---
   const resendCode = async () => {
     if (!verificationEmail.value) return false
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/resend_code/', {
+      const res = await fetch(`${API_BASE_URL}/auth/resend_code/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: verificationEmail.value })
@@ -117,7 +132,7 @@ const login = async (email, password) => {
   // --- Telegram login ---
   const telegramLogin = async (telegramUserId) => {
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/telegram_login/', {
+      const res = await fetch(`${API_BASE_URL}/auth/telegram_login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_user_id: telegramUserId })
@@ -138,7 +153,7 @@ const login = async (email, password) => {
   // --- Link Telegram ---
   const linkTelegram = async (telegramUserId) => {
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/link_telegram/', {
+      const res = await fetch(`${API_BASE_URL}/auth/link_telegram/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +184,7 @@ const login = async (email, password) => {
   const getMe = async () => {
     if (!accessToken.value) return false
     try {
-      const res = await fetch('http://pvz.localhost/api/v1/auth/me/', {
+      const res = await fetch(`${API_BASE_URL}/auth/me/`, {
         headers: { 'Authorization': `Bearer ${accessToken.value}` }
       })
       if (res.ok) {
