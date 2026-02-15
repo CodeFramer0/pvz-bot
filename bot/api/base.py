@@ -1,13 +1,6 @@
 import logging
-import time
 
 import aiohttp
-from services.jwt_client import JWTClient
-
-RESET = "\033[0m"
-GREEN = "\033[32m"
-YELLOW = "\033[33m"
-RED = "\033[31m"
 
 logger = logging.getLogger("BaseAPI")
 
@@ -15,82 +8,88 @@ logger = logging.getLogger("BaseAPI")
 class BaseAPI:
     BASE_URL = "http://web:8000/api/v1/"
 
-    def __init__(self, endpoint: str, jwt_client: JWTClient):
+    _session: aiohttp.ClientSession | None = None
+
+    def __init__(self, endpoint: str, jwt_client):
         self.endpoint = self.BASE_URL + endpoint
         self.jwt_client = jwt_client
 
+    @classmethod
+    async def get_session(cls) -> aiohttp.ClientSession:
+        if cls._session is None or cls._session.closed:
+            timeout = aiohttp.ClientTimeout(total=30)
+            cls._session = aiohttp.ClientSession(timeout=timeout)
+        return cls._session
+
     async def _headers(self):
-        """
-        Проверяем токен и делаем логин при необходимости.
-        """
         try:
             token = await self.jwt_client.get_access()
-        except Exception as e:
-            logger.warning(f"JWT expired or missing, re-login: {e}")
+        except Exception:
             await self.jwt_client._login()
             token = await self.jwt_client.get_access()
 
         return {
             "Authorization": f"Bearer {token}",
             "Accept": "application/json",
+            "Content-Type": "application/json",
         }
 
     @staticmethod
     async def _process_response(response: aiohttp.ClientResponse) -> dict | None:
-        """
-        Process the API response.
-
-        Args:
-            response (aiohttp.ClientResponse): The API response object.
-
-        Returns:
-            dict | None: Parsed JSON data from the response or None if an error occurs.
-        """
         try:
             data = await response.json()
             response.raise_for_status()
             if isinstance(data, list):
-                data = data if len(data) > 1 else data[0] if data else None
+                return data[0] if len(data) == 1 else data
             return data
-        except (aiohttp.ClientError, ValueError) as e:
-            logging.error(f"An error occurred during response processing: {e}")
-            logging.error(f"Response status: {response.status}")
-            logging.error(f"Response content: {await response.text()}")
+        except Exception as e:
+            logger.error(f"API error: {e}")
+            try:
+                logger.error(await response.text())
+            except Exception:
+                pass
             return None
 
-    async def get(self, params=None, id: int | None = None):
-        url = f"{self.endpoint}{id}/" if id else self.endpoint
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, params=params, headers=await self._headers()
-            ) as resp:
-                return await self._process_response(resp)
+    def _build_url(self, path: str = "", id: int | None = None) -> str:
+        if id is not None:
+            return f"{self.endpoint}{id}/"
+        if path:
+            return f"{self.endpoint}{path}"
+        return self.endpoint
 
-    async def post(self, data=None, json=None):
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                self.endpoint, data=data, json=json, headers=await self._headers()
-            ) as resp:
-                return await self._process_response(resp)
+    async def get(self, params=None, id: int | None = None, path: str = ""):
+        url = self._build_url(path=path, id=id)
+        session = await self.get_session()
+        async with session.get(
+            url, params=params, headers=await self._headers()
+        ) as resp:
+            return await self._process_response(resp)
 
-    async def put(self, id: int, data=None, json=None):
-        url = f"{self.endpoint}{id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.put(
-                url, data=data, json=json, headers=await self._headers()
-            ) as resp:
-                return await self._process_response(resp)
+    async def post(self, path: str = "", json: dict | None = None):
+        url = self._build_url(path=path)
+        session = await self.get_session()
+        async with session.post(url, json=json, headers=await self._headers()) as resp:
+            return await self._process_response(resp)
 
-    async def patch(self, id: int, data=None, json=None):
-        url = f"{self.endpoint}{id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.patch(
-                url, data=data, json=json, headers=await self._headers()
-            ) as resp:
-                return await self._process_response(resp)
+    async def put(self, id: int, json: dict | None = None):
+        url = self._build_url(id=id)
+        session = await self.get_session()
+        async with session.put(url, json=json, headers=await self._headers()) as resp:
+            return await self._process_response(resp)
+
+    async def patch(self, id: int, json: dict | None = None):
+        url = self._build_url(id=id)
+        session = await self.get_session()
+        async with session.patch(url, json=json, headers=await self._headers()) as resp:
+            return await self._process_response(resp)
 
     async def delete(self, id: int):
-        url = f"{self.endpoint}{id}/"
-        async with aiohttp.ClientSession() as session:
-            async with session.delete(url, headers=await self._headers()) as resp:
-                return await self._process_response(resp)
+        url = self._build_url(id=id)
+        session = await self.get_session()
+        async with session.delete(url, headers=await self._headers()) as resp:
+            return await self._process_response(resp)
+
+    @classmethod
+    async def close_session(cls):
+        if cls._session and not cls._session.closed:
+            await cls._session.close()

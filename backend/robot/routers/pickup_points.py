@@ -12,8 +12,8 @@ from ..views import PickupPointViewSet
 router = DefaultRouter()
 router.register(r"", PickupPointViewSet, basename="pickup-point")
 
-pickup_points_urls = [
+urlpatterns = [
     path("", include(router.urls)),
 ]
 
-__all__ = ["pickup_points_urls"]
+__all__ = ["urlpatterns"]

@@ -12,8 +12,8 @@ from ..views import UserViewSet
 router = DefaultRouter()
 router.register(r"", UserViewSet, basename="user")
 
-users_urls = [
+urlpatterns = [
     path("", include(router.urls)),
 ]
 
-__all__ = ["users_urls"]
+__all__ = ["urlpatterns"]

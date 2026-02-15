@@ -6,16 +6,16 @@ OpenAPI schemas для user endpoints
 
 from drf_spectacular.utils import extend_schema
 
-# ============= LIST SCHEMA =============
+# ================= USERS =================
 
+# ===== LIST USERS =====
 users_list_schema = extend_schema(
     summary="Список пользователей",
     description="Получить список пользователей с фильтрацией и поиском",
     tags=["Users"],
 )
 
-# ============= CREATE SCHEMA =============
-
+# ===== CREATE USER =====
 users_create_schema = extend_schema(
     summary="Регистрация",
     description="Зарегистрировать нового пользователя",
@@ -56,24 +56,21 @@ users_create_schema = extend_schema(
     },
 )
 
-# ============= RETRIEVE SCHEMA =============
-
+# ===== RETRIEVE USER =====
 users_retrieve_schema = extend_schema(
     summary="Получить пользователя",
     description="Получить информацию о пользователе",
     tags=["Users"],
 )
 
-# ============= UPDATE SCHEMA =============
-
+# ===== UPDATE USER =====
 users_update_schema = extend_schema(
     summary="Обновить пользователя",
     description="Обновить информацию о пользователе",
     tags=["Users"],
 )
 
-# ============= DESTROY SCHEMA =============
-
+# ===== DELETE USER =====
 users_destroy_schema = extend_schema(
     summary="Удалить пользователя",
     description="Удалить аккаунт пользователя",

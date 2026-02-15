@@ -1,5 +1,6 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from loader import bot, dp
 from states.profile import ProfileStates
 
@@ -11,6 +12,10 @@ async def delete_last_message(message: types.Message):
         pass
 
 
+keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+keyboard.add(KeyboardButton("Отправить номер", request_contact=True))
+
+
 async def state_finish(state: FSMContext):
     await state.finish()
 
@@ -20,28 +25,28 @@ async def bot_start(message: types.Message, state: FSMContext, user: dict = None
     await state.finish()
 
     # проверка профиля
-    app_user = user.get("app_user") if user else None
-    email = app_user.get("email") if isinstance(app_user, dict) else None
-    phone = user.get("phone_number") if user else None
-    phone = user.get("phone_number") if user else None
+    email = user.get("email", None)
+    phone = user.get("phone_number", None)
 
     if not email:
-        await ProfileStates.waiting_email.set()
         await message.answer(
             "Здравствуйте, чтобы полноценно пользоваться ботом, <strong>укажите пожалуйста следующим сообщением Вам E-mail.</strong>\n\n"
             "На данный момент наблюдаются проблемы с работой Telegram, поэтому мы разработали Web App приложение!\n\n"
             "Указав Email - мы сможем связать Ваш текущий телеграмм аккаунт с аккаунтом приложения, и сможем оставаться всегда с Вами на связи!"
         )
+        await ProfileStates.waiting_email.set()
         return
 
     if not phone:
         # await ProfileStates.waiting_phone.set()
-        await message.answer("Укажи номер телефона (в формате +79990000000):")
-        return
+        return await message.answer(
+            "Укажите пожалуйста номер телефона, нажав кнопку ниже:",
+            reply_markup=keyboard,
+        )
 
     msg = (
         f"Добро пожаловать, {message.from_user.first_name}!\n\n"
-        "Пришли фото штрих/QR-кода для добавления заказа.\n\n"
+        "Отправьте фото штрих/QR-кода для добавления заказа.\n\n"
         "Разработчик @CodeFramer (по тех. вопросам)."
     )
     await message.answer(msg)

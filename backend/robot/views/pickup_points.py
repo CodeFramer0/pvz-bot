@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import PickupPoint
@@ -26,7 +26,7 @@ from ..serializers import PickupPointSerializer
 class PickupPointViewSet(viewsets.ModelViewSet):
     queryset = PickupPoint.objects.all()
     serializer_class = PickupPointSerializer
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
 
     @action(detail=False, methods=["get"])
     def by_marketplace(self, request):

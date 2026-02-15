@@ -1,17 +1,21 @@
 from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-from .auth import auth_urls
-from .orders import orders_urls
-from .pickup_points import pickup_points_urls
-from .telegram_users import telegram_users_urls
-from .users import users_urls
+from ..views import OrderViewSet, TelegramUserViewSet, UserViewSet
+
+# добавь другие ViewSet-и по аналогии
+
+router = DefaultRouter()
+router.register(r"users", UserViewSet, basename="user")
+router.register(r"telegram-users", TelegramUserViewSet, basename="telegram-user")
+router.register(r"orders", OrderViewSet, basename="order")
+# и так далее для других роутов
 
 urlpatterns = [
-    path("auth/", include(auth_urls)),
-    path("users/", include(users_urls)),
-    path("orders/", include(orders_urls)),
-    path("pickup-points/", include(pickup_points_urls)),
-    path("telegram-users/", include(telegram_users_urls)),
+    path("", include(router.urls)),
+    path("auth/", include("robot.routers.auth")),
+    path("users/", include("robot.routers.users")),
+    path("orders/", include("robot.routers.orders")),
+    path("pickup-points/", include("robot.routers.pickup_points")),
+    path("telegram-users/", include("robot.routers.telegram_users")),
 ]
-
-__all__ = ["urlpatterns"]

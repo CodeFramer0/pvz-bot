@@ -5,8 +5,8 @@ robot/views/__init__.py
 """
 
 from .auth import (ChangePasswordView, CurrentUserView, EmailPasswordLoginView,
-                   LogoutView, RefreshTokenView, UsernamePasswordLoginView,
-                   VerifyTokenView)
+                   LogoutView, RefreshTokenView, SendVerificationCodeView,
+                   UsernamePasswordLoginView, VerifyCodeView, VerifyTokenView)
 from .orders import OrderViewSet
 from .pickup_points import PickupPointViewSet
 from .telegram_users import TelegramUserViewSet
@@ -21,6 +21,8 @@ __all__ = [
     "CurrentUserView",
     "ChangePasswordView",
     "VerifyTokenView",
+    "VerifyCodeView",
+    "SendVerificationCodeView",
     # ViewSets
     "OrderViewSet",
     "PickupPointViewSet",

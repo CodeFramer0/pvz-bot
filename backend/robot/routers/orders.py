@@ -6,6 +6,6 @@ from ..views import OrderViewSet
 router = DefaultRouter()
 router.register(r"", OrderViewSet, basename="order")  # ← убрали 'orders'
 
-orders_urls = [
+urlpatterns = [
     path("", include(router.urls)),
 ]

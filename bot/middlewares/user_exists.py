@@ -21,7 +21,7 @@ class EnsureUserMiddleware(BaseMiddleware):
         if not user:
             # создаём нового
             new_user = await self.api.post(
-                data={
+                json={
                     "name": tg_user.full_name,
                     "nick_name": nick_name,
                     "user_id": user_id,

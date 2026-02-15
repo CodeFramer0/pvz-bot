@@ -12,8 +12,8 @@ from ..views import TelegramUserViewSet
 router = DefaultRouter()
 router.register(r"", TelegramUserViewSet, basename="telegram-user")
 
-telegram_users_urls = [
+urlpatterns = [
     path("", include(router.urls)),
 ]
 
-__all__ = ["telegram_users_urls"]
+__all__ = ["urlpatterns"]

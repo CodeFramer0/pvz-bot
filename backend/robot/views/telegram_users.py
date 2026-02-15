@@ -14,9 +14,7 @@ from ..schemas.telegram_users import (telegram_users_bind_user_schema,
                                       telegram_users_list_schema,
                                       telegram_users_retrieve_schema,
                                       telegram_users_update_schema)
-from ..serializers.telegram_users import (TelegramUserDetailSerializer,
-                                          TelegramUserListSerializer,
-                                          TelegramUserSerializer)
+from ..serializers.telegram_users import TelegramUserSerializer
 
 User = get_user_model()
 
@@ -34,27 +32,20 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
     CRUD TelegramUser + bind_user action
     """
 
-    queryset = TelegramUser.objects.all().order_by("id")
+    queryset = TelegramUser.objects.all().select_related("app_user").order_by("id")
     permission_classes = (IsAuthenticated,)
     filterset_class = TelegramUserFilter
-
-    def get_serializer_class(self):
-        if self.action == "list":
-            return TelegramUserListSerializer
-        elif self.action == "retrieve":
-            return TelegramUserDetailSerializer
-        return TelegramUserSerializer
+    serializer_class = TelegramUserSerializer
 
     @telegram_users_bind_user_schema
     @action(detail=True, methods=["post"])
     def bind_user(self, request, pk=None):
         """
-        Создаёт AppUser по email/телефону, генерирует пароль и
+        Создаёт AppUser по email, генерирует пароль и
         привязывает его к TelegramUser
         """
         telegram_user = self.get_object()
         email = request.data.get("email")
-        phone = request.data.get("phone_number")
 
         if not email:
             return Response(
@@ -70,7 +61,7 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
 
         password = get_random_string(12)
         user = User.objects.create_user(
-            username=email, email=email, phone_number=phone, password=password
+            username=email, email=email, password=password
         )
 
         telegram_user.app_user = user
