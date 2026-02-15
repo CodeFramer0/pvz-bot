@@ -1,1 +1,1 @@
-from . import order, start
+from . import order, profile, start

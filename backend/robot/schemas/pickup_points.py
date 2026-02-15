@@ -3,6 +3,7 @@ robot/schemas/pickup_points.py
 
 OpenAPI schemas для pickup_point endpoints
 """
+
 from drf_spectacular.utils import extend_schema
 
 # ============= LIST SCHEMA =============
@@ -26,7 +27,7 @@ pickup_points_create_schema = extend_schema(
                 "address": {"type": "string"},
                 "marketplace": {
                     "type": "string",
-                    "enum": ["ozon", "wb", "yandex", "cdek", "mail"]
+                    "enum": ["ozon", "wb", "yandex", "cdek", "mail"],
                 },
                 "admin_telegram_user_id": {"type": "integer"},
             },
@@ -34,8 +35,8 @@ pickup_points_create_schema = extend_schema(
             "example": {
                 "address": "ул. Пушкина, д. 10",
                 "marketplace": "ozon",
-                "admin_telegram_user_id": 1
-            }
+                "admin_telegram_user_id": 1,
+            },
         }
     },
     responses={
@@ -44,10 +45,10 @@ pickup_points_create_schema = extend_schema(
             "example": {
                 "id": 1,
                 "address": "ул. Пушкина, д. 10",
-                "marketplace": "ozon"
-            }
+                "marketplace": "ozon",
+            },
         }
-    }
+    },
 )
 
 # ============= RETRIEVE SCHEMA =============
@@ -80,11 +81,13 @@ pickup_points_by_marketplace_schema = extend_schema(
     summary="Пункты по маркетплейсу",
     description="Получить пункты выдачи определенного маркетплейса",
     tags=["PickupPoints"],
-    parameters=[{
-        'name': 'marketplace',
-        'in': 'query',
-        'description': 'ozon, wb, yandex, cdek, mail',
-        'schema': {'type': 'string'},
-        'required': True
-    }]
+    parameters=[
+        {
+            "name": "marketplace",
+            "in": "query",
+            "description": "ozon, wb, yandex, cdek, mail",
+            "schema": {"type": "string"},
+            "required": True,
+        }
+    ],
 )

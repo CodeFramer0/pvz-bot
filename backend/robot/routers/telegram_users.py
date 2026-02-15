@@ -3,16 +3,17 @@ robot/routers/telegram_users.py
 
 Все endpoints для работы с Telegram пользователями
 """
-from django.urls import path, include
+
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from ..views import TelegramUserViewSet
 
 router = DefaultRouter()
-router.register(r'', TelegramUserViewSet, basename='telegram-user')
+router.register(r"", TelegramUserViewSet, basename="telegram-user")
 
 telegram_users_urls = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
 
-__all__ = ['telegram_users_urls']
+__all__ = ["telegram_users_urls"]

@@ -291,7 +291,7 @@ AUTHENTICATION_BACKENDS = [
 # JWT CONFIGURATION
 # ==================================================
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
@@ -321,7 +321,6 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
-
     # Swagger UI
     "SWAGGER_UI_DIST": "https://unpkg.com/swagger-ui-dist@4",
     "SWAGGER_UI_FAVICON_URL": "https://unpkg.com/swagger-ui-dist@4/favicon-32x32.png",
@@ -335,10 +334,8 @@ SPECTACULAR_SETTINGS = {
         "docExpansion": "list",
         "tryItOutEnabled": True,
     },
-
     # ReDoc
     "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
-
     # SECURITY - добавляет кнопку AUTHORIZE
     "SECURITY": [{"bearerAuth": []}],
     "COMPONENTS": {

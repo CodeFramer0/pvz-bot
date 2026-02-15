@@ -1,6 +1,7 @@
 from aiogram.dispatcher.middlewares import BaseMiddleware
-from loader import jwt_client
 from api import TelegramUserAPI
+from loader import jwt_client
+
 
 class EnsureUserMiddleware(BaseMiddleware):
     def __init__(self):
@@ -19,8 +20,8 @@ class EnsureUserMiddleware(BaseMiddleware):
 
         if not user:
             # создаём нового
-            new_user = await self.api.create(
-                body={
+            new_user = await self.api.post(
+                data={
                     "name": tg_user.full_name,
                     "nick_name": nick_name,
                     "user_id": user_id,
@@ -33,7 +34,7 @@ class EnsureUserMiddleware(BaseMiddleware):
             user["name"] != tg_user.full_name or user["nick_name"] != nick_name
         )
         if need_update:
-            return await self.api.update(
+            return await self.api.patch(
                 id=user["id"],
                 body={
                     "user_id": user_id,
@@ -43,7 +44,6 @@ class EnsureUserMiddleware(BaseMiddleware):
             )
 
         return user
-
 
     async def on_pre_process_message(self, message, data: dict):
         data["user"] = await self._get_or_create_or_update(message.from_user)

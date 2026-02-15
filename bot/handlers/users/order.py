@@ -9,7 +9,7 @@ from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp
+from loader import bot, dp, order_api, pickup_point_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -177,9 +177,9 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
     cb_order_action.filter(action="cancel"),
     state="*",
 )
-async def cancel(query: types.CallbackQuery, state: FSMContext):
+async def cancel(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
-    await back_to_main_menu(query.message, state)
+    await back_to_main_menu(query.message, state, user)
 
 
 @dp.callback_query_handler(

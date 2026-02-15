@@ -3,6 +3,7 @@ robot/schemas/orders.py
 
 OpenAPI schemas для order endpoints
 """
+
 from drf_spectacular.utils import extend_schema
 
 # ============= LIST SCHEMA =============
@@ -40,10 +41,10 @@ orders_create_schema = extend_schema(
                 "full_name": "John Doe",
                 "amount": "1500",
                 "status": "pending",
-                "date_created": "2024-01-15T10:30:00Z"
-            }
+                "date_created": "2024-01-15T10:30:00Z",
+            },
         }
-    }
+    },
 )
 
 # ============= RETRIEVE SCHEMA =============
@@ -83,16 +84,20 @@ orders_update_status_schema = extend_schema(
                 "status": {
                     "type": "string",
                     "enum": [
-                        "pending", "completed", "barcode_expired", "not_arrived_goods",
-                        "insufficient_funds", "card_not_linked", "contact_manager",
-                        "processed", "arrived"
-                    ]
+                        "pending",
+                        "completed",
+                        "barcode_expired",
+                        "not_arrived_goods",
+                        "insufficient_funds",
+                        "card_not_linked",
+                        "contact_manager",
+                        "processed",
+                        "arrived",
+                    ],
                 },
             },
             "required": ["status"],
-            "example": {
-                "status": "completed"
-            }
+            "example": {"status": "completed"},
         }
     },
 )

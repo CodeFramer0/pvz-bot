@@ -7,9 +7,11 @@ from django.utils.translation import gettext_lazy as _
 
 
 class AppUser(AbstractUser):
-    email_verified = models.BooleanField(default=False)
     verification_code = models.CharField(max_length=6, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    email_verified = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "App пользователь"

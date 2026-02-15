@@ -3,6 +3,7 @@ robot/schemas/users.py
 
 OpenAPI schemas для user endpoints
 """
+
 from drf_spectacular.utils import extend_schema
 
 # ============= LIST SCHEMA =============
@@ -37,8 +38,8 @@ users_create_schema = extend_schema(
                 "password": "password123",
                 "password_confirm": "password123",
                 "first_name": "John",
-                "last_name": "Doe"
-            }
+                "last_name": "Doe",
+            },
         }
     },
     responses={
@@ -49,10 +50,10 @@ users_create_schema = extend_schema(
                 "username": "john_doe",
                 "email": "john@example.com",
                 "first_name": "John",
-                "last_name": "Doe"
-            }
+                "last_name": "Doe",
+            },
         }
-    }
+    },
 )
 
 # ============= RETRIEVE SCHEMA =============

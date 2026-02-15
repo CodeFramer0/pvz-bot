@@ -1,7 +1,8 @@
 # bot/services/jwt_client.py
-import os
-import aiohttp
 import logging
+import os
+
+import aiohttp
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://web:8000/api/v1/")
 BOT_LOGIN = os.getenv("BOT_LOGIN", "r")

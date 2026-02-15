@@ -1,6 +1,7 @@
-import aiohttp
 import logging
 import time
+
+import aiohttp
 from services.jwt_client import JWTClient
 
 RESET = "\033[0m"
@@ -60,24 +61,32 @@ class BaseAPI:
     async def get(self, params=None, id: int | None = None):
         url = f"{self.endpoint}{id}/" if id else self.endpoint
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, headers=await self._headers()) as resp:
+            async with session.get(
+                url, params=params, headers=await self._headers()
+            ) as resp:
                 return await self._process_response(resp)
 
     async def post(self, data=None, json=None):
         async with aiohttp.ClientSession() as session:
-            async with session.post(self.endpoint, data=data, json=json, headers=await self._headers()) as resp:
+            async with session.post(
+                self.endpoint, data=data, json=json, headers=await self._headers()
+            ) as resp:
                 return await self._process_response(resp)
 
     async def put(self, id: int, data=None, json=None):
         url = f"{self.endpoint}{id}/"
         async with aiohttp.ClientSession() as session:
-            async with session.put(url, data=data, json=json, headers=await self._headers()) as resp:
+            async with session.put(
+                url, data=data, json=json, headers=await self._headers()
+            ) as resp:
                 return await self._process_response(resp)
 
     async def patch(self, id: int, data=None, json=None):
         url = f"{self.endpoint}{id}/"
         async with aiohttp.ClientSession() as session:
-            async with session.patch(url, data=data, json=json, headers=await self._headers()) as resp:
+            async with session.patch(
+                url, data=data, json=json, headers=await self._headers()
+            ) as resp:
                 return await self._process_response(resp)
 
     async def delete(self, id: int):

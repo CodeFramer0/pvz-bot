@@ -4,8 +4,8 @@ from rest_framework.routers import DefaultRouter
 from ..views import OrderViewSet
 
 router = DefaultRouter()
-router.register(r'', OrderViewSet, basename='order')  # ← убрали 'orders'
+router.register(r"", OrderViewSet, basename="order")  # ← убрали 'orders'
 
 orders_urls = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

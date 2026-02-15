@@ -1,19 +1,18 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from drf_spectacular.utils import extend_schema_view
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
 from ..models import PickupPoint
+from ..schemas.pickup_points import (pickup_points_by_marketplace_schema,
+                                     pickup_points_create_schema,
+                                     pickup_points_destroy_schema,
+                                     pickup_points_list_schema,
+                                     pickup_points_retrieve_schema,
+                                     pickup_points_update_schema)
 from ..serializers import PickupPointSerializer
-from ..schemas.pickup_points import (
-    pickup_points_list_schema,
-    pickup_points_create_schema,
-    pickup_points_retrieve_schema,
-    pickup_points_update_schema,
-    pickup_points_destroy_schema,
-    pickup_points_by_marketplace_schema,
-)
+
 
 @extend_schema_view(
     list=pickup_points_list_schema,
@@ -29,12 +28,15 @@ class PickupPointViewSet(viewsets.ModelViewSet):
     serializer_class = PickupPointSerializer
     permission_classes = (AllowAny,)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def by_marketplace(self, request):
-        marketplace = request.query_params.get('marketplace')
+        marketplace = request.query_params.get("marketplace")
 
         if not marketplace:
-            return Response({'error': 'marketplace параметр обязателен'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "marketplace параметр обязателен"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         pickup_points = PickupPoint.objects.filter(marketplace=marketplace)
         serializer = self.get_serializer(pickup_points, many=True)
