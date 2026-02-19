@@ -1,17 +1,25 @@
 from drf_spectacular.utils import extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Order
-from ..schemas.orders import (orders_create_schema, orders_destroy_schema,
-                              orders_list_schema, orders_retrieve_schema,
-                              orders_update_schema,
-                              orders_update_status_schema)
-from ..serializers import (OrderCreateSerializer, OrderDetailSerializer,
-                           OrderListSerializer)
-from rest_framework.parsers import MultiPartParser, FormParser
+from ..schemas.orders import (
+    orders_create_schema,
+    orders_destroy_schema,
+    orders_list_schema,
+    orders_retrieve_schema,
+    orders_update_schema,
+    orders_update_status_schema,
+)
+from ..serializers import (
+    OrderCreateSerializer,
+    OrderDetailSerializer,
+    OrderListSerializer,
+)
+
 
 @extend_schema_view(
     list=orders_list_schema,
@@ -26,6 +34,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     parser_classes = [MultiPartParser, FormParser]
     queryset = Order.objects.all().order_by("-date_created")
+
     def get_serializer_class(self):
         if self.action == "retrieve":
             return OrderDetailSerializer
@@ -47,12 +56,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.save()
 
         return Response(OrderDetailSerializer(order).data, status=status.HTTP_200_OK)
-    
+
     @action(detail=False, methods=["get"], url_path="my_orders")
     def my_orders(self, request):
         """
         Возвращает все заказы текущего пользователя
         """
-        orders = Order.objects.filter(customer=self.request.user).order_by("-date_created")
+        orders = Order.objects.filter(customer=self.request.user).order_by(
+            "-date_created"
+        )
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

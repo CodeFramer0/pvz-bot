@@ -2,14 +2,15 @@ from io import BytesIO
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.utils.exceptions import (MessageCantBeDeleted,
-                                      MessageToForwardNotFound)
+from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToForwardNotFound
 from api.endpoints import OrderAPI, PickupPointAPI, TelegramUserAPI
 from keyboards.inline import order_keyboards
-from keyboards.inline.callback_data import (cb_order_action,
-                                            cb_order_marketplace_action,
-                                            cb_order_pickup_point_action)
-from loader import bot, dp, order_api, pickup_point_api
+from keyboards.inline.callback_data import (
+    cb_order_action,
+    cb_order_marketplace_action,
+    cb_order_pickup_point_action,
+)
+from loader import bot, dp,telegram_user_api, order_api, pickup_point_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -129,7 +130,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    order = await order_api.create(
+    order = await order_api.post(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
@@ -200,7 +201,7 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
 
     image_bytes.name = "image.jpg"
 
-    order = await order_api.create(
+    order = await order_api.post(
         body={
             "full_name": full_name,
             "pickup_point": pickup_point_id,

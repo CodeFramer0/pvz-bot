@@ -181,7 +181,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://pvz.localhost",
     f"http://{MINIO_DOMAIN}",
-    'http://10.0.2.2',
+    "http://10.0.2.2",
 ]
 
 # Swagger UI CDN от Swagger (unpkg)
@@ -353,7 +353,11 @@ SPECTACULAR_SETTINGS = {
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Эти настройки можно оставить, хоть они не используются
-EMAIL_HOST = "localhost"
-EMAIL_PORT = 25
-EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = "noreply@pvz.localhost"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.mail.ru"
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = "no-reply@sdsprinter.ru"
+EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", "eqsGeGTQ60A0TlXluchU")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = 60

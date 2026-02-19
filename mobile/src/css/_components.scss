@@ -1,0 +1,674 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'animations';
+
+// ────────────────────────────────────────────────────────────
+// PAGE BASE
+// ────────────────────────────────────────────────────────────
+
+.pvz-page {
+  @include page-base;
+}
+
+.pvz-page-header {
+  @include page-header;
+}
+
+// ────────────────────────────────────────────────────────────
+// FORM ELEMENTS
+// ────────────────────────────────────────────────────────────
+
+.pvz-form-group  { margin-bottom: 20px; }
+
+.pvz-form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: $font-weight-semibold;
+  color: #374151;
+  letter-spacing: 0.3px;
+}
+
+.pvz-form-input {
+  @include field-control;
+}
+
+.pvz-form-input--textarea {
+  :deep(.q-field__control) { border-radius: $radius-md; min-height: auto; }
+  :deep(textarea)           { min-height: 80px; }
+}
+
+.pvz-form-input--code {
+  @include field-control;
+  :deep(input) {
+    font-size: 20px !important; // override platform 16px rule
+    font-weight: $font-weight-semibold;
+    letter-spacing: 4px;
+    text-align: center;
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// BUTTONS
+// ────────────────────────────────────────────────────────────
+
+.pvz-btn-primary {
+  @include action-btn;
+  box-shadow: $shadow-brand;
+  letter-spacing: 0.5px;
+}
+
+.pvz-btn-back {
+  height: 52px;
+  font-weight: $font-weight-semibold;
+}
+
+.pvz-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-top: 24px;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    .pvz-btn-back { order: 2; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// CARDS
+// ────────────────────────────────────────────────────────────
+
+.pvz-card {
+  @include card($radius-2xl, 24px);
+}
+
+.pvz-section-card {
+  @include section-card;
+}
+
+// ────────────────────────────────────────────────────────────
+// STATUS BADGES
+// ────────────────────────────────────────────────────────────
+
+.pvz-badge {
+  @include status-badge;
+
+  &--success { background: $color-success-bg; color: darken($color-success, 5%); }
+  &--warning { background: $color-warning-bg; color: $color-warning; }
+  &--info    { background: $color-info-bg;    color: $color-info; }
+  &--default { background: $color-bg-page;    color: $color-text-muted; }
+  &--lg      { padding: 8px 16px; border-radius: $radius-md; font-size: 12px; }
+}
+
+// ────────────────────────────────────────────────────────────
+// PROGRESS STEPS
+// ────────────────────────────────────────────────────────────
+
+.pvz-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+
+  .pvz-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+
+    &__circle {
+      @include step-circle;
+    }
+
+    &__label {
+      font-size: 12px;
+      color: $color-text-hint;
+      font-weight: $font-weight-semibold;
+      transition: all 0.3s ease;
+    }
+
+    &.active {
+      .pvz-step__circle {
+        background: $gradient-brand;
+        color: $color-white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px $primary-shadow;
+      }
+      .pvz-step__label { color: $primary-start; }
+    }
+
+    &.completed {
+      .pvz-step__circle { background: $color-success; color: $color-white; }
+      .pvz-step__label  { color: $color-success; }
+    }
+  }
+
+  .pvz-step-line {
+    width: 50px;
+    height: 3px;
+    background: $color-border;
+    margin: 0 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 22px;
+
+    &.active { background: $gradient-brand; }
+  }
+
+  @include mobile {
+    padding: 0;
+    .pvz-step-line { width: 30px; margin: 0 8px 22px; }
+    .pvz-step__label { font-size: 11px; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// CUSTOM TABS
+// ────────────────────────────────────────────────────────────
+
+.pvz-tabs {
+  @include custom-tabs;
+}
+
+// ────────────────────────────────────────────────────────────
+// EMPTY STATE
+// ────────────────────────────────────────────────────────────
+
+.pvz-empty {
+  @include empty-state;
+}
+
+// ────────────────────────────────────────────────────────────
+// SEARCH
+// ────────────────────────────────────────────────────────────
+
+.pvz-search {
+  border-radius: $radius-lg;
+  box-shadow: $shadow-md;
+
+  :deep(.q-field__control) { border-radius: $radius-lg; }
+}
+
+// ────────────────────────────────────────────────────────────
+// UPLOAD AREA
+// ────────────────────────────────────────────────────────────
+
+.pvz-upload {
+  border: 3px dashed $color-border-light;
+  border-radius: $radius-lg;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: $color-bg-card;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @include hover {
+    &:hover { border-color: $primary-start; background: #f0f3ff; }
+  }
+
+  &--drag-over { border-color: $primary-start; background: #e0e7ff; transform: scale(1.02); }
+  &--has-image { padding: 20px; border-style: solid; border-color: $color-success; }
+
+  &__placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  &__text { margin: 0; font-size: 16px; font-weight: $font-weight-semibold; color: $color-text-body; }
+  &__hint { margin: 0; font-size: 13px; color: $color-text-hint; }
+
+  &__preview { position: relative; width: 100%; }
+  &__image   { max-width: 100%; max-height: 300px; border-radius: $radius-md; box-shadow: $shadow-md; }
+  &__remove  { position: absolute; top: -10px; right: -10px; background: $color-white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+}
+
+// ────────────────────────────────────────────────────────────
+// ORDER CARD
+// ────────────────────────────────────────────────────────────
+
+.pvz-order-card {
+  @include card($radius-xl, 16px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  &:active { transform: scale(0.98); }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  &__marketplace { display: flex; gap: 12px; align-items: center; }
+
+  &__icon {
+    font-size: 32px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: $radius-md;
+  }
+
+  &__name { margin: 0; font-size: 16px; font-weight: $font-weight-semibold; color: $color-text-dark; }
+  &__id   { margin: 2px 0 0; font-size: 12px; color: #95a5a6; }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: $color-text-body;
+
+      .amount  { font-weight: $font-weight-semibold; color: $primary-start; }
+      .address { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    }
+  }
+
+  &__footer { display: flex; justify-content: flex-end; }
+}
+
+// ────────────────────────────────────────────────────────────
+// SETTINGS LIST
+// ────────────────────────────────────────────────────────────
+
+.pvz-settings-list {
+  @include settings-list;
+}
+
+// ────────────────────────────────────────────────────────────
+// STAT CARDS
+// ────────────────────────────────────────────────────────────
+
+.pvz-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pvz-stat-card {
+  @include card($radius-xl, 20px);
+  text-align: center;
+  transition: all 0.25s ease;
+
+  &:active { transform: scale(0.95); }
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 12px;
+    border-radius: $radius-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__number { margin: 0; font-size: 28px; font-weight: $font-weight-bold; color: $color-text-dark; }
+  &__label  { margin: 4px 0 0; font-size: 12px; color: $color-text-muted; font-weight: $font-weight-medium; }
+
+  &--orange .pvz-stat-card__icon { background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%); color: $color-warning; }
+  &--green  .pvz-stat-card__icon { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%); color: #16a34a; }
+  &--blue   .pvz-stat-card__icon { background: linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%); color: $color-info; }
+  &--grey   .pvz-stat-card__icon { background: linear-gradient(135deg, $color-bg-card 0%, $color-border 100%); color: $color-text-muted; }
+}
+
+.pvz-stat-card-hero {
+  @include card($radius-2xl, 32px);
+  text-align: center;
+  box-shadow: $shadow-lg;
+
+  &__emoji  { font-size: 64px; margin-bottom: 16px; }
+  &__number {
+    margin: 0;
+    font-size: 48px;
+    font-weight: $font-weight-bold;
+    background: $gradient-brand;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  &__label  { margin: 8px 0 0; font-size: 16px; color: $color-text-muted; font-weight: $font-weight-medium; }
+}
+
+// ────────────────────────────────────────────────────────────
+// AUTH PAGE
+// ────────────────────────────────────────────────────────────
+
+.pvz-auth-page {
+  min-height: 100vh;
+  background: $gradient-brand;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+
+  @include safe-top(20px);
+  @include safe-bottom(20px);
+
+  @include blobs;
+
+  &__container {
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__card {
+    background: $color-white;
+    border-radius: $radius-3xl;
+    padding: 40px 32px;
+    box-shadow: $shadow-xl;
+    animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+
+    @include mobile { padding: 32px 24px; }
+  }
+}
+
+.pvz-logo-section {
+  text-align: center;
+  margin-bottom: 32px;
+
+  &__circle {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+    background: $gradient-brand;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+    font-size: 40px;
+  }
+
+  &__title    { margin: 0 0 8px; font-size: 28px; font-weight: $font-weight-bold; color: $color-text-dark; letter-spacing: -0.5px; @include mobile { font-size: 24px; } }
+  &__subtitle { margin: 0; font-size: 14px; color: $color-text-muted; }
+}
+
+.pvz-auth-tabs {
+  @include auth-tabs;
+  margin-bottom: 24px;
+}
+
+.pvz-auth-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid $color-border;
+
+  &__text { font-size: 14px; color: $color-text-muted; margin-right: 4px; }
+  &__link { font-weight: $font-weight-semibold; font-size: 14px; }
+}
+
+// ────────────────────────────────────────────────────────────
+// TELEGRAM SECTION
+// ────────────────────────────────────────────────────────────
+
+.pvz-telegram-linked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(0,136,204,0.1) 0%, rgba(0,160,233,0.1) 100%);
+  border: 1px solid rgba(0,136,204,0.2);
+  border-radius: $radius-md;
+}
+
+.pvz-telegram-empty {
+  padding: 16px;
+  background: $color-bg-card;
+  border: 1px dashed $color-border-light;
+  border-radius: $radius-md;
+  text-align: center;
+
+  p { margin: 0 0 16px; font-size: 13px; color: $color-text-muted; line-height: 1.5; }
+}
+
+// ────────────────────────────────────────────────────────────
+// DETAIL DIALOG
+// ────────────────────────────────────────────────────────────
+
+.pvz-detail-dialog {
+  border-radius: 24px 24px 0 0;
+  max-width: 100%;
+
+  @include desktop {
+    border-radius: $radius-2xl;
+    max-width: 480px;
+    width: 90vw;
+  }
+
+  &__header {
+    background: $gradient-brand;
+    color: $color-white;
+    padding: 24px;
+
+    .title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      h5 { margin: 0; font-size: 20px; font-weight: $font-weight-semibold; }
+    }
+  }
+
+  &__body { padding: 24px; }
+
+  .detail-section {
+    margin-bottom: 24px;
+    &:last-child { margin-bottom: 0; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: $font-weight-semibold;
+      color: $color-text-muted;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-content {
+      margin: 0;
+      font-size: 16px;
+      color: $color-text-dark;
+      font-weight: $font-weight-medium;
+      &--amount { font-size: 24px; font-weight: $font-weight-bold; color: $primary-start; }
+    }
+
+    .section-sub { margin: 4px 0 0; font-size: 14px; color: $color-text-muted; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// ICON BACKGROUNDS
+// ────────────────────────────────────────────────────────────
+
+.icon-bg {
+  &--primary  { background: linear-gradient(135deg, rgba($primary-start, 0.1) 0%, rgba($primary-end, 0.1) 100%); }
+  &--success  { background: linear-gradient(135deg, rgba($color-success, 0.1) 0%, rgba(22,163,74,0.1) 100%); }
+  &--warning  { background: linear-gradient(135deg, rgba(251,146,60,0.1) 0%, rgba($color-warning,0.1) 100%); }
+  &--info     { background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba($color-info,0.1) 100%); }
+  &--telegram { background: linear-gradient(135deg, #0088cc 0%, #00a0e9 100%); color: $color-white; }
+  &--settings { background: $gradient-brand; color: $color-white; }
+  &--about    { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: $color-white; }
+}
+
+// ────────────────────────────────────────────────────────────
+// SUCCESS STEP
+// ────────────────────────────────────────────────────────────
+
+.pvz-success {
+  text-align: center;
+  padding: 20px 0;
+
+  &__icon   { margin-bottom: 20px; }
+  &__title  { margin: 0 0 12px; font-size: 24px; font-weight: $font-weight-bold; color: $color-text-dark; }
+  &__text   { margin: 0 0 32px; font-size: 15px; color: $color-text-muted; line-height: 1.6; }
+
+  &__summary {
+    background: $color-bg-card;
+    border-radius: $radius-lg;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: left;
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid $color-border;
+      &:last-child { border-bottom: none; }
+    }
+
+    .summary-label { font-size: 14px; color: $color-text-muted; font-weight: $font-weight-medium; }
+    .summary-value { font-size: 15px; color: $color-text-dark; font-weight: $font-weight-semibold; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// HERO HEADER (orders page)
+// ────────────────────────────────────────────────────────────
+
+.pvz-hero-header {
+  background: $gradient-glass;
+  backdrop-filter: blur(10px);
+  padding: 24px $page-padding-x;
+  border-radius: 0 0 24px 24px;
+  margin-bottom: 20px;
+  @include safe-top(24px);
+
+  &__inner { display: flex; justify-content: space-between; align-items: center; }
+
+  &__greeting {
+    margin: 0;
+    color: $color-white;
+    font-size: 24px;
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.5px;
+    @include mobile { font-size: 20px; }
+  }
+
+  &__sub    { margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 14px; }
+  &__profile-btn { color: $color-white; font-size: 32px; }
+}
+
+// ────────────────────────────────────────────────────────────
+// FAB
+// ────────────────────────────────────────────────────────────
+
+.pvz-fab {
+  box-shadow: $shadow-brand;
+  @include desktop { display: none; } // на десктопе FAB скрыт — кнопка в шапке
+}
+
+// ────────────────────────────────────────────────────────────
+// PROFILE AVATAR
+// ────────────────────────────────────────────────────────────
+
+.pvz-avatar {
+  text-align: center;
+  margin-bottom: 24px;
+
+  &__circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: $color-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    position: relative;
+    z-index: 2;
+    margin: 0 auto;
+  }
+
+  &__letter {
+    font-size: 40px;
+    font-weight: $font-weight-bold;
+    background: $gradient-brand;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  &__ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.3);
+    z-index: 1;
+  }
+
+  &__name  { margin: 16px 0 4px; color: $color-white; font-size: 24px; font-weight: $font-weight-bold; letter-spacing: -0.5px;
+    @include desktop { color: $color-text-dark; margin-top: 0; }
+  }
+  &__email { margin: 0 0 8px; color: rgba(255,255,255,0.8); font-size: 14px;
+    @include desktop { color: $color-text-muted; }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// PROFILE QUICK STATS
+// ────────────────────────────────────────────────────────────
+
+.pvz-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @include mobile { gap: 8px; }
+
+  .stat-item {
+    @include glass-card($radius-lg);
+    padding: 16px 12px;
+    text-align: center;
+    transition: transform 0.2s;
+    &:active { transform: scale(0.95); }
+    @include mobile { padding: 12px 8px; }
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 8px;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    @include mobile { width: 40px; height: 40px; }
+  }
+
+  .stat-value {
+    font-size: 24px;
+    font-weight: $font-weight-bold;
+    color: $color-white;
+    margin-bottom: 2px;
+    @include mobile { font-size: 20px; }
+    @include desktop { color: $color-text-dark; }
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-weight: $font-weight-medium;
+    @include desktop { color: $color-text-muted; }
+  }
+}

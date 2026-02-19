@@ -10,17 +10,19 @@ class AppUser(AbstractUser):
     verification_code = models.CharField(max_length=6, blank=True, null=True)
     password_reset_code = models.CharField(max_length=32, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email_verified = models.BooleanField(default=False)
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
-    class Meta:
-        verbose_name = "App пользователь"
-        verbose_name_plural = "App пользователи"
+
+    USERNAME_FIELD = "email"  # ← ИЗМЕНИ НА EMAIL
+    REQUIRED_FIELDS = ["username"]  # ← username теперь в required
 
     def __str__(self):
         return f"{self.username} ({self.email})"
+
+    class Meta:
+        verbose_name = "App пользователь"
+        verbose_name_plural = "App пользователи"
 
 
 class TelegramUser(models.Model):
@@ -81,15 +83,16 @@ class PickupPoint(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ("pending", _("Ожидает.")),
-        ("completed", _("Собран и погружен на ближайшую доставку.")),
-        ("barcode_expired", _("Штрих код устарел.")),
-        ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
-        ("insufficient_funds", _("Недостаточно средств.")),
-        ("card_not_linked", _("Банковская карта не привязана.")),
-        ("contact_manager", _("Свяжитесь с менеджером.")),
-        ("processed", _("Обработан.")),
-        ("arrived", _("Готов к выдаче.")),
+        ("Created", _("В сборке")),
+        ("Processed", _("Обработан")),
+        ("TransferringToDelivery", _("Передается в доставку")),
+        ("BarcodeExpired", _("Штрих код устарел")),
+        ("NotArrivedGoods", _("Ваши товары еще не в Анастасиевке")),
+        ("InsufficientFunds", _("Недостаточно средств")),
+        ("CardNotLinked", _("Банковская карта не привязана")),
+        ("ContactManager", _("Свяжитесь с менеджером.")),
+        ("AvailableForPickup", _("Готов к выдаче")),
+        ("Received",_("Заказ получен в пункте выдачи"))
     ]
 
     customer = models.ForeignKey(
@@ -115,7 +118,7 @@ class Order(models.Model):
     )
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default="pending", verbose_name="Статус"
+        max_length=128, choices=STATUS_CHOICES, default="pending", verbose_name="Статус"
     )
 
     class Meta:

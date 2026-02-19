@@ -5,7 +5,7 @@ import os
 import aiohttp
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://web:8000/api/v1/")
-BOT_LOGIN = os.getenv("BOT_LOGIN", "r")
+BOT_LOGIN = os.getenv("BOT_LOGIN", "admin@sdsprinter.ru")
 BOT_PASSWORD = os.getenv("BOT_PASSWORD", "1")
 
 logger = logging.getLogger("JWTClient")
@@ -20,8 +20,8 @@ class JWTClient:
         """Стандартный логин, получаем access + refresh"""
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                API_BASE_URL + "auth/login/username/",
-                json={"username": BOT_LOGIN, "password": BOT_PASSWORD},
+                API_BASE_URL + "auth/login/email/",
+                json={"email": BOT_LOGIN, "password": BOT_PASSWORD},
             ) as resp:
                 resp.raise_for_status()
                 data = await resp.json()

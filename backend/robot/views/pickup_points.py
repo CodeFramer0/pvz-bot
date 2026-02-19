@@ -5,12 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import PickupPoint
-from ..schemas.pickup_points import (pickup_points_by_marketplace_schema,
-                                     pickup_points_create_schema,
-                                     pickup_points_destroy_schema,
-                                     pickup_points_list_schema,
-                                     pickup_points_retrieve_schema,
-                                     pickup_points_update_schema)
+from ..schemas.pickup_points import (
+    pickup_points_by_marketplace_schema,
+    pickup_points_create_schema,
+    pickup_points_destroy_schema,
+    pickup_points_list_schema,
+    pickup_points_retrieve_schema,
+    pickup_points_update_schema,
+)
 from ..serializers import PickupPointSerializer
 
 

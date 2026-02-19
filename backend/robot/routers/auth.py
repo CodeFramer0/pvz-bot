@@ -6,9 +6,17 @@ robot/routers/auth.py
 
 from django.urls import path
 
-from ..views import (EmailTokenObtainPairView, ForgotPasswordView, LogoutView, RefreshTokenView,
-                     ResetPasswordView, SendVerificationCodeView,VerifyCodeView,
-                     VerifyTokenView,CurrentUserView)
+from ..views import (
+    CurrentUserView,
+    EmailTokenObtainPairView,
+    ForgotPasswordView,
+    LogoutView,
+    RefreshTokenView,
+    ResetPasswordView,
+    SendVerificationCodeView,
+    VerifyCodeView,
+    VerifyTokenView,
+)
 
 # Все auth endpoints
 urlpatterns = [

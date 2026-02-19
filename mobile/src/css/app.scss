@@ -1,1 +1,10 @@
-// app global css in SCSS form
+// ════════════════════════════════════════════════════════════
+// app.scss — единый вход для глобальных стилей
+// src/css/app.scss
+// ════════════════════════════════════════════════════════════
+
+@forward 'variables';
+@forward 'animations';
+@forward 'platform';    // safe area, touch fixes, ios pwa
+@forward 'components';  // все pvz-* классы
+@forward 'responsive';  // desktop overrides

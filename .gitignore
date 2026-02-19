@@ -206,3 +206,4 @@ DerivedData/
 # Misc
 *.swp
 *.swo
+backend/telegram_users.json

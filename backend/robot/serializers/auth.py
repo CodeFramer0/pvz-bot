@@ -12,11 +12,11 @@ AppUser = get_user_model()
 
 
 class EmailPasswordTokenObtainPairSerializer(TokenObtainPairSerializer):
-    username_field = 'email'  # ключевой момент
+    username_field = "email"  # ключевой момент
 
     def validate(self, attrs):
-        email = attrs.get('email')
-        password = attrs.get('password')
+        email = attrs.get("email")
+        password = attrs.get("password")
         if not email or not password:
             raise serializers.ValidationError("Email и пароль обязательны")
 
@@ -25,6 +25,6 @@ class EmailPasswordTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError("Неверный email или пароль")
 
         # теперь вызываем базовый метод с правильным username_field
-        data = super().validate({'email': email, 'password': password})
-        data['status'] = "success"
+        data = super().validate({"email": email, "password": password})
+        data["status"] = "success"
         return data

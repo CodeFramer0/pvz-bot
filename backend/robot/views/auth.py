@@ -1,6 +1,8 @@
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils.crypto import get_random_string
+from django_redis import get_redis_connection
 from drf_spectacular.utils import extend_schema_view
-from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -8,22 +10,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from ..models import AppUser
-from ..schemas.auth import (change_password_schema, current_user_schema,
-                            email_login_schema, logout_schema,
-                            refresh_token_schema,
-                            send_verification_code_schema,
-                            username_login_schema, verify_code_schema,
-                            verify_token_schema)
-from ..serializers import (EmailPasswordTokenObtainPairSerializer,
-                           UserSerializer)
-
-# ================= VERIFICATION CODES =================
-verification_store = {}  # для простоты, в проде Redis/DB
-password_reset_store = {}
-from django.contrib.auth import get_user_model
+from ..schemas.auth import (
+    change_password_schema,
+    current_user_schema,
+    email_login_schema,
+    logout_schema,
+    refresh_token_schema,
+    send_verification_code_schema,
+    username_login_schema,
+    verify_code_schema,
+    verify_token_schema,
+)
+from ..serializers import EmailPasswordTokenObtainPairSerializer, UserSerializer
+from ..utils import generate_numeric_code, send_verification_email
 
 AppUser = get_user_model()
 
@@ -36,6 +38,7 @@ class EmailTokenObtainPairView(TokenObtainPairView):
     """
     Логин по email и password с выдачей access и refresh токенов
     """
+
     permission_classes = (AllowAny,)
     serializer_class = EmailPasswordTokenObtainPairSerializer
 
@@ -48,6 +51,7 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @extend_schema_view(post=refresh_token_schema)
 class RefreshTokenView(TokenRefreshView):
@@ -130,19 +134,22 @@ class VerifyTokenView(APIView):
             )
 
 
-@extend_schema_view(post=send_verification_code_schema)
 class SendVerificationCodeView(APIView):
     permission_classes = (AllowAny,)
 
-    @action(detail=True, methods=["POST"])
     def post(self, request):
         email = request.data.get("email")
         if not email:
             return Response({"email": "Обязательное поле"}, status=400)
 
-        code = get_random_string(6, allowed_chars="0123456789")
-        verification_store[email] = code  # + TTL в проде
-        print(f"Verification code for {email}: {code}")  # сюда вставить email-сервис
+        code = generate_numeric_code(6)
+
+        r = get_redis_connection("default")
+        key = f"email_verification:{email}"
+        r.setex(key, 300, code)
+
+        send_verification_email(email, code)
+
         return Response({"detail": "Код отправлен"}, status=200)
 
 
@@ -150,23 +157,38 @@ class SendVerificationCodeView(APIView):
 class VerifyCodeView(APIView):
     permission_classes = (AllowAny,)
 
-    @action(detail=True, methods=["POST"])
     def post(self, request):
         email = request.data.get("email")
         code = request.data.get("code")
-        if verification_store.get(email) != code:
+
+        if not email or not code:
+            return Response({"detail": "email и code обязательны"}, status=400)
+
+        r = get_redis_connection("default")
+
+        code_key = f"email_verification:{email}"
+        saved_code = r.get(code_key)
+
+        if not saved_code:
+            return Response({"detail": "Код истёк или не найден"}, status=400)
+
+        if saved_code.decode() != code:
             return Response({"detail": "Неверный код"}, status=400)
 
-        temp_token = get_random_string(32)
-        verification_store[email] = {"verified": True, "temp_token": temp_token}
-        return Response({"temporary_token": temp_token}, status=200)
+        # одноразовый temp token (на биндинг / установку пароля)
+        temp_token = get_random_string(48)
+        token_key = f"email_verification_token:{email}"
+
+        r.setex(token_key, 600, temp_token)  # 10 минут
+        r.delete(code_key)  # код больше нельзя использовать
+
+        return Response({"temporary_token": temp_token}, status=status.HTTP_200_OK)
 
 
-# можно создать свой schema
+
 class ForgotPasswordView(APIView):
     permission_classes = (AllowAny,)
 
-    @action(detail=True, methods=["POST"])
     def post(self, request):
         email = request.data.get("email")
         if not email:
@@ -174,43 +196,73 @@ class ForgotPasswordView(APIView):
 
         user = AppUser.objects.filter(email=email).first()
         if not user:
+            # Всегда возвращаем одинаковый ответ → безопасность
             return Response(
                 {"detail": "Если email зарегистрирован, ссылка отправлена"}, status=200
             )
 
-        code = get_random_string(32)
-        password_reset_store[email] = code
+        # создаём одноразовый reset токен в Redis
+        token = get_random_string(48)
+        r = get_redis_connection("default")
+        key = f"password_reset:{email}"
+        r.setex(key, 600, token)  # 10 минут TTL
 
-        reset_link = f"http://pvz.localhost/reset-password?code={code}"
-        print(reset_link)
+        reset_link = f"http://pvz.localhost/reset-password?code={token}"
+
+        # Отправляем email (HTML вариант)
+        send_verification_email(
+            email,
+            f"Сброс пароля", 
+            html=f"""
+            <html>
+              <body style="font-family: Arial; text-align: center;">
+                <h2>Сброс пароля</h2>
+                <p>Для сброса пароля нажмите на кнопку ниже:</p>
+                <a href="{reset_link}" style="display:inline-block;padding:10px 20px;
+                   background:#1a73e8;color:white;border-radius:5px;text-decoration:none;">
+                   Сбросить пароль
+                </a>
+                <p>Ссылка действительна 10 минут.</p>
+              </body>
+            </html>
+            """
+        )
 
         return Response(
             {"detail": "Если email зарегистрирован, ссылка отправлена"}, status=200
         )
 
-
 class ResetPasswordView(APIView):
     permission_classes = (AllowAny,)
 
-    @action(detail=True, methods=["POST"])
     def post(self, request):
         email = request.data.get("email")
-        code = request.data.get("code")
+        token = request.data.get("code")  # одноразовый токен из письма
         new_password = request.data.get("new_password")
         new_password_confirm = request.data.get("new_password_confirm")
 
-        if password_reset_store.get(email) != code:
-            return Response({"detail": "Неверный код"}, status=400)
+        if not email or not token:
+            return Response({"detail": "email и code обязательны"}, status=400)
+
+        r = get_redis_connection("default")
+        key = f"password_reset:{email}"
+        saved_token = r.get(key)
+
+        if not saved_token or saved_token.decode() != token:
+            return Response({"detail": "Неверный код или срок истёк"}, status=400)
 
         if new_password != new_password_confirm:
             return Response({"detail": "Пароли не совпадают"}, status=400)
+        if len(new_password) < 8:
+            return Response({"detail": "Пароль должен быть минимум 8 символов"}, status=400)
 
         user = AppUser.objects.filter(email=email).first()
         if not user:
             return Response({"detail": "Пользователь не найден"}, status=400)
 
         user.set_password(new_password)
-        user.save()
-        del password_reset_store[email]
+        user.save(update_fields=["password"])
+
+        r.delete(key)  # токен одноразовый, удаляем
 
         return Response({"detail": "Пароль успешно изменён"}, status=200)

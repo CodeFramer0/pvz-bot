@@ -1,7 +1,6 @@
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
-from api.endpoints import (AuthAPI, OrderAPI, PickupPointAPI, TelegramUserAPI,
-                           UsersAPI)
+from api.endpoints import AuthAPI, OrderAPI, PickupPointAPI, TelegramUserAPI, UsersAPI
 from config import BOT_TOKEN
 from services.jwt_client import JWTClient
 

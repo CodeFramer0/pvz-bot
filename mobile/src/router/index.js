@@ -3,46 +3,20 @@ import { useAuthStore } from 'src/stores/auth-store'
 
 const routes = [
   {
-    path: '/login',
-    name: 'Login',
-    component: () => import('pages/LoginPage.vue'),
-    meta: { requiresAuth: false }
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('pages/RegisterPage.vue'),
-    meta: { requiresAuth: false }
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('pages/ProfilePage.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/add',
-    name: 'AddOrder',
-    component: () => import('pages/AddOrder.vue'),
-    meta: { requiresAuth: true }
-  },
-  
-  {
-    path: '/orders',
-    name: 'Orders',
-    component: () => import('pages/OrdersPage.vue'),
-    meta: { requiresAuth: true }
-
-
-  }
-,
-  {
     path: '/',
-    name: 'index',
-    component: () => import('pages/IndexPage.vue'),
-    meta: { requiresAuth: true }
-
-
+    children: [
+      { path: '', name: 'Index', component: () => import('pages/IndexPage.vue'), meta: { requiresAuth: true } },
+      { path: 'add', name: 'AddOrder', component: () => import('pages/AddOrder.vue'), meta: { requiresAuth: true } },
+      { path: 'profile', name: 'Profile', component: () => import('pages/ProfilePage.vue'), meta: { requiresAuth: true } },
+      { path: 'orders/:id', name: 'OrderDetail', component: () => import('pages/OrderDetailPage.vue'), meta: { requiresAuth: true } },
+      { path: 'login', name: 'Login', component: () => import('pages/LoginPage.vue'), meta: { requiresAuth: false } },
+      { path: 'register', name: 'Register', component: () => import('pages/RegisterPage.vue'), meta: { requiresAuth: false } },
+    ]
+  },
+  {
+    path: '/:catchAll(.*)*',
+    name: 'NotFound',
+    component: () => import('pages/ErrorNotFound.vue')
   }
 ]
 
@@ -51,12 +25,11 @@ const router = createRouter({
   routes
 })
 
+// Проверка авторизации
 let initialCheckDone = false
-
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // При первой загрузке app проверяем авторизацию
   if (!initialCheckDone) {
     initialCheckDone = true
     if (authStore.accessToken) {
