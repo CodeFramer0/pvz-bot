@@ -10,19 +10,16 @@
 
 @include desktop {
 
-  // Страницы — светло-серый фон вместо градиента
   .pvz-page {
     background: #f7f7f8 !important;
     min-height: 100vh;
   }
 
-  // Градиентные шапки — скрыть
   .pvz-hero-header,
   .pvz-page-header {
     display: none !important;
   }
 
-  // Поиск — белый с бордером
   .pvz-search {
     box-shadow: none !important;
     :deep(.q-field__control) {
@@ -34,7 +31,6 @@
     :deep(.q-field__marginal) { height: 40px; }
   }
 
-  // Вкладки — компактные
   .pvz-tabs {
     background: #fff;
     border: 1px solid $color-border;
@@ -74,7 +70,6 @@
     }
   }
 
-  // Empty state
   .pvz-empty {
     background: #fff;
     border: 1px solid $color-border;
@@ -84,13 +79,13 @@
     .empty-text  { color: $color-text-muted; }
   }
 
-  // Карточки — более чёткие тени
-  .pvz-card, .pvz-section-card, .pvz-order-card {
+  .pvz-card, 
+  .pvz-section-card, 
+  .pvz-order-card {
     border: 1px solid $color-border;
     box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   }
 
-  // Hover у order card
   .pvz-order-card {
     transition: all 0.2s ease;
     cursor: pointer;
@@ -104,7 +99,6 @@
     &:active { transform: translateY(0); }
   }
 
-  // Stat cards
   .pvz-stat-card {
     border: 1px solid $color-border;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
@@ -132,7 +126,6 @@
     box-sizing: border-box;
   }
 
-  // Шапка страницы
   .desktop-orders-header {
     display: flex;
     align-items: center;
@@ -154,7 +147,6 @@
     margin: 2px 0 0;
   }
 
-  // Toolbar: поиск + табы в одну строку
   .desktop-orders-toolbar {
     display: flex;
     align-items: center;
@@ -165,7 +157,6 @@
     .pvz-tabs   { flex: 0; white-space: nowrap; }
   }
 
-  // 2 колонки на широких экранах
   .orders-list {
     @media (min-width: $bp-xl) {
       display: grid !important;
@@ -174,7 +165,6 @@
     }
   }
 
-  // Статистика — 4 колонки
   .stats-section {
     max-width: 860px;
   }
@@ -200,7 +190,6 @@
     width: 100%;
   }
 
-  // Горизонтальная шапка профиля
   .profile-desktop-header {
     background: #fff;
     border: 1px solid $color-border;
@@ -242,7 +231,6 @@
     }
   }
 
-  // Статистика горизонтально в header
   .pvz-quick-stats {
     display: flex !important;
     gap: 0 !important;
@@ -285,7 +273,6 @@
     }
   }
 
-  // 2-колоночный грид для секций
   .profile-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
@@ -293,7 +280,6 @@
     padding: 0 !important;
     margin-top: 0 !important;
 
-    // Телеграм + выход — полная ширина
     .pvz-section-card:first-child,
     .logout-section {
       grid-column: 1 / -1;
@@ -339,7 +325,6 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
   }
 
-  // Шаги — компактнее
   .pvz-steps {
     .pvz-step-line { width: 60px; }
   }
@@ -354,7 +339,6 @@
     padding: 0 !important;
     border-radius: 0 !important;
 
-    // Декоративная левая панель
     .auth-desktop-left {
       display: flex;
       flex-direction: column;
@@ -365,7 +349,6 @@
       position: relative;
       overflow: hidden;
 
-      // Декоративные круги
       &::before, &::after {
         content: '';
         position: absolute;
@@ -404,7 +387,6 @@
 
 @include desktop {
   .detail-page {
-    // Скрываем мобильный hero
     .detail-hero { display: none !important; }
 
     .detail-content {
@@ -412,18 +394,15 @@
       margin: 0 auto;
       padding: 28px 32px !important;
 
-      // 2-колоночный лейаут
       display: grid !important;
       grid-template-columns: 1fr 320px;
       gap: 20px;
       align-items: start;
 
-      // Основная карточка — левая колонка
       > .detail-card:not(.detail-card--barcode) {
         grid-column: 1;
       }
 
-      // Штрих-код — правая, sticky
       .detail-card--barcode {
         grid-column: 2;
         grid-row: 1 / 10;
@@ -433,7 +412,6 @@
     }
   }
 
-  // Desktop заголовок детальной страницы (нужно добавить в OrderDetailPage)
   .detail-desktop-header {
     display: flex;
     align-items: center;

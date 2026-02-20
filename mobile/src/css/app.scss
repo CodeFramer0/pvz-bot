@@ -1,10 +1,12 @@
 // ════════════════════════════════════════════════════════════
-// app.scss — единый вход для глобальных стилей
+// APP.SCSS — Главный файл с глобальными стилями
 // src/css/app.scss
 // ════════════════════════════════════════════════════════════
 
-@forward 'variables';
-@forward 'animations';
-@forward 'platform';    // safe area, touch fixes, ios pwa
-@forward 'components';  // все pvz-* классы
-@forward 'responsive';  // desktop overrides
+// Порядок важен! Сначала переменные, потом миксины, потом компоненты
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'animations';
+@use 'platform';      // safe area, touch fixes, iOS PWA
+@use 'components';    // все pvz-* классы
+@use 'responsive';    // desktop overrides

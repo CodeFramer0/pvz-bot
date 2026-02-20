@@ -16,9 +16,7 @@
 }
 
 html {
-  // Предотвращает скачок при overscroll
   overscroll-behavior: none;
-  // Запрещает выделение текста на тач (кроме полей ввода)
   -webkit-user-select: none;
   user-select: none;
 }
@@ -30,28 +28,24 @@ input, textarea, [contenteditable] {
 
 body {
   overscroll-behavior: none;
-  // Плавный инерционный скролл в iOS
   -webkit-overflow-scrolling: touch;
 }
 
 // ─── iOS PWA Specific ────────────────────────────────────────
 
 @include ios-pwa {
-  // Отключаем bounce эффект у body (скролл только внутри контейнеров)
   body {
     position: fixed;
     width: 100%;
     overflow: hidden;
   }
 
-  // Основной скролл-контейнер должен иметь overflow: auto
   .q-page-container {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     height: 100vh;
   }
 
-  // Status bar area — добавляем отступ сверху
   .pvz-page-header,
   .pvz-hero-header,
   .detail-hero,
@@ -62,7 +56,6 @@ body {
 
 // ─── Safe Area — применяется везде (iOS + Android cutout) ────
 
-// Шапки страниц
 .pvz-page-header {
   padding-top: calc(16px + env(safe-area-inset-top, 0px));
 }
@@ -71,26 +64,22 @@ body {
   padding-top: calc(24px + env(safe-area-inset-top, 0px));
 }
 
-// Bottom navigation (Quasar q-footer / q-tab-bar)
 .q-footer,
 .q-tabs--bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-// Основной контент — отступ снизу под табы + safe area
 .pvz-page {
   @include touch {
     padding-bottom: calc(#{$page-padding-b} + env(safe-area-inset-bottom, 0px));
   }
 }
 
-// Страницы без bottom tabs (auth, форма создания)
 .pvz-auth-page,
 .pvz-no-tabs {
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 
-// Боковые safe area (для landscape телефонов с notch)
 .pvz-page-header,
 .pvz-hero-header,
 .detail-content,
@@ -103,24 +92,16 @@ body {
 
 // ─── Android Capacitor Specific ──────────────────────────────
 
-// Capacitor добавляет data-attr к body или можно определить через JS
-// Класс .capacitor-android добавляется через main.js:
-// if (Capacitor.isNativePlatform()) document.body.classList.add('capacitor-android')
-
 .capacitor-android {
-  // Android status bar обычно 24-28dp, Capacitor StatusBar plugin управляет цветом
-  // Если используется transparent status bar:
   .pvz-page-header,
   .pvz-hero-header {
     padding-top: calc(16px + env(safe-area-inset-top, 28px));
   }
 
-  // Android навигационная панель снизу
   .q-footer {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  // Отключаем hover (на Android Chrome они иногда залипают)
   * {
     @media (hover: none) {
       &:hover { background: unset !important; }
@@ -131,7 +112,6 @@ body {
 // ─── Touch Optimizations ─────────────────────────────────────
 
 @include touch {
-  // Минимальный размер touch target — 44px (Apple HIG)
   button,
   .q-btn,
   .setting-item,
@@ -141,7 +121,6 @@ body {
     min-height: 44px;
   }
 
-  // Отключаем hover-эффекты на touch
   .pvz-order-card:hover,
   .setting-item:hover,
   .auth-tab:hover,
@@ -149,27 +128,24 @@ body {
     background: unset;
   }
 
-  // Активное состояние вместо hover
   .pvz-order-card:active { transform: scale(0.98); }
   .pvz-stat-card:active  { transform: scale(0.95); }
   .setting-item:active   { background: $color-bg-page; }
 }
 
-// ─── PWA Install Banner ───────────────────────────────────────
-
-// Скрываем scrollbar везде (мобильный вид)
-@include touch {
-  ::-webkit-scrollbar { display: none; }
-  * { scrollbar-width: none; }
-}
-
 // ─── Prevent Zoom on Input Focus (iOS) ───────────────────────
 
-// iOS зумит страницу при фокусе на input < 16px font-size
 .q-field__native,
 .q-field__input,
 input[type],
 select,
 textarea {
-  font-size: 16px !important; // предотвращает автозум
+  font-size: 16px !important;
+}
+
+// ─── Hide Scrollbar (Mobile) ─────────────────────────────────
+
+@include touch {
+  ::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
 }
