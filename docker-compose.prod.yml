@@ -18,8 +18,8 @@ services:
       - "--api.dashboard=true"
       # - "--log.level=DEBUG"
       - "--accesslog=true"
-      - "--experimental.plugins.scanblock.moduleName=github.com/safing/scanblock"
-      - "--experimental.plugins.scanblock.version=v1.0.0"
+      - experimental.plugins.scanblock.modulename=github.com/safing/scanblock
+      - experimental.plugins.scanblock.version=v1.0.0
     ports:
       - "80:80"
       - "8080:8080"
