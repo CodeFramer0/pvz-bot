@@ -66,13 +66,6 @@ class PickupPoint(models.Model):
     marketplace = models.CharField(
         verbose_name="Название маркетплейса", max_length=50, choices=MARKETPLACE_CHOICES
     )
-    admin_telegram_user = models.ForeignKey(
-        TelegramUser,
-        on_delete=models.CASCADE,
-        related_name="notification_accounts",
-        verbose_name="Аккаунт для уведомлений",
-    )
-
     class Meta:
         verbose_name = "Пункт выдачи"
         verbose_name_plural = "Пункты выдачи"
@@ -83,23 +76,24 @@ class PickupPoint(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ("Created", _("В сборке")),
-        ("Processed", _("Обработан")),
-        ("TransferringToDelivery", _("Передается в доставку")),
-        ("BarcodeExpired", _("Штрих код устарел")),
-        ("NotArrivedGoods", _("Ваши товары еще не в Анастасиевке")),
-        ("InsufficientFunds", _("Недостаточно средств")),
-        ("CardNotLinked", _("Банковская карта не привязана")),
-        ("ContactManager", _("Свяжитесь с менеджером.")),
-        ("AvailableForPickup", _("Готов к выдаче")),
-        ("Received", _("Заказ получен в пункте выдачи")),
+        ("pending", _("Ожидает.")),
+        ("completed", _("Собран и погружен на ближайшую доставку.")),
+        ("barcode_expired", _("Штрих код устарел.")),
+        ("not_arrived_goods", _("Ваши товары еще не в Анастасиевке.")),
+        ("insufficient_funds", _("Недостаточно средств.")),
+        ("card_not_linked", _("Банковская карта не привязана.")),
+        ("contact_manager", _("Свяжитесь с менеджером.")),
+        ("processed", _("Обработан.")),
+        ("arrived", _("Готов к выдаче.")),
     ]
 
     customer = models.ForeignKey(
-        AppUser,  # Меняем на AppUser вместо TelegramUser
+        AppUser,
         on_delete=models.CASCADE,
         related_name="orders",
         verbose_name="Пользователь",
+        null=True,
+        blank=True,
     )
     pickup_point = models.ForeignKey(
         PickupPoint,

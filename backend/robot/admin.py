@@ -59,8 +59,8 @@ class TelegramUserAdmin(admin.ModelAdmin):
         "date_join",
         "is_administrator",
     )
-    search_fields = ("nick_name", "name", "user_id")
-    list_filter = ("is_administrator", "date_join")
+    search_fields = ("id","nick_name", "name", "user_id")
+    list_filter = ("is_administrator","date_join")
     ordering = ("-date_join",)
 
     def has_add_permission(self, request, obj=None):
@@ -109,73 +109,74 @@ class StatusFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = (
-        "customer",
-        "cell_id",
-        "id",
-        "pickup_point",
-        "full_name",
-        "date_created",
-        "status",
-        "image_tag",
-    )
-    list_filter = (
-        StatusFilter,
-        "pickup_point",
-        "date_created",
-    )
-    search_fields = (
-        "full_name",
-        "pickup_point__address",
-        "customer__id",
-        "customer__nick_name",
-        "customer__name",
-    )
-    ordering = ("-date_created",)
-    readonly_fields = (
-        "customer",
-        "image_tag",
-        "date_created",
-        "cell_id",
-    )
-    fieldsets = (
-        (
-            None,
-            {
-                "fields": (
-                    "customer",
-                    "pickup_point",
-                    "full_name",
-                    "amount",
-                    "comment",
-                    "barcode_image",
-                    "status",
-                    "date_created",
-                    "cell_id",
-                    "image_tag",
-                )
-            },
-        ),
-    )
+    pass
+    # list_display = (
+    #     "customer",
+    #     "cell_id",
+    #     "id",
+    #     "pickup_point",
+    #     "full_name",
+    #     "date_created",
+    #     "status",
+    #     "image_tag",
+    # )
+    # list_filter = (
+    #     StatusFilter,
+    #     "pickup_point",
+    #     "date_created",
+    # )
+    # search_fields = (
+    #     "full_name",
+    #     "pickup_point__address",
+    #     "customer__id",
+    #     "customer__nick_name",
+    #     "customer__name",
+    # )
+    # ordering = ("-date_created",)
+    # readonly_fields = (
+    #     "customer",
+    #     "image_tag",
+    #     "date_created",
+    #     "cell_id",
+    # )
+    # fieldsets = (
+    #     (
+    #         None,
+    #         {
+    #             "fields": (
+    #                 "customer",
+    #                 "pickup_point",
+    #                 "full_name",
+    #                 "amount",
+    #                 "comment",
+    #                 "barcode_image",
+    #                 "status",
+    #                 "date_created",
+    #                 "cell_id",
+    #                 "image_tag",
+    #             )
+    #         },
+    #     ),
+    # )
 
-    actions = ["mark_as_arrived"]
+    # actions = ["mark_as_arrived"]
 
-    @admin.action(
-        description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента"
-    )
-    def mark_as_arrived(self, request, queryset):
-        # Проверяем, что поле status корректное
-        pending_orders = queryset.exclude(status="arrived")
+    # @admin.action(
+    #     description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента"
+    # )
+    # def mark_as_arrived(self, request, queryset):
+    #     # Проверяем, что поле status корректное
+    #     pending_orders = queryset.exclude(status="arrived")
 
-        # Получаем список id, чтобы отправлять уведомления
-        order_ids = pending_orders.values_list("id", flat=True)
-        for order_id in order_ids:
-            logging.info(f"Отправка уведомления заказу {order_id}")
-            send_order_arrived_notification.delay(order_id)
+    #     # Получаем список id, чтобы отправлять уведомления
+    #     order_ids = pending_orders.values_list("id", flat=True)
+    #     for order_id in order_ids:
+    #         logging.info(f"Отправка уведомления заказу {order_id}")
+    #         send_order_arrived_notification.delay(order_id)
 
-        updated_count = pending_orders.update(status="arrived")
-        self.message_user(
-            request,
-            f"{updated_count} заказ(ов) отмечены как 'Прибывший' и уведомления отправлены.",
-            messages.SUCCESS,
-        )
+    #     updated_count = pending_orders.update(status="arrived")
+    #     self.message_user(
+    #         request,
+    #         f"{updated_count} заказ(ов) отмечены как 'Прибывший' и уведомления отправлены.",
+    #         messages.SUCCESS,
+    #     )
