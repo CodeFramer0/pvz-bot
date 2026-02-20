@@ -75,7 +75,11 @@ services:
     - "traefik.http.routers.pvz.rule=Host(`sdsprinter.ru`)"
     - "traefik.http.routers.pvz.entrypoints=web"
     - "traefik.http.services.pvz.loadbalancer.server.port=8000"
-
+    experimental:
+      plugins:
+        scanblock:
+          moduleName: "github.com/safing/scanblock"
+          version: "v1.0.0"
   # ---------------- Bot ----------------
   bot:
     container_name: pvz-bot
