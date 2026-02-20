@@ -62,8 +62,6 @@ services:
       dockerfile: Dockerfile
     restart: always
     command: sh /backend/entrypoint.prod.sh
-    volumes:
-      - ./backend:/backend
     env_file:
       - .env
     depends_on:
