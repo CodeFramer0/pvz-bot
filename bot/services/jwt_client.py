@@ -5,8 +5,8 @@ import os
 import aiohttp
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://web:8000/api/v1/")
-BOT_LOGIN = os.getenv("BOT_LOGIN", "admin@sdsprinter.ru")
-BOT_PASSWORD = os.getenv("BOT_PASSWORD", "1")
+BOT_LOGIN = os.getenv("BOT_LOGIN")
+BOT_PASSWORD = os.getenv("BOT_PASSWORD")
 
 logger = logging.getLogger("JWTClient")
 

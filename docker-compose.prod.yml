@@ -16,7 +16,6 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--api.dashboard=true"
-      - "--api.insecure=true"
       # - "--log.level=DEBUG"
       - "--accesslog=true"
     ports:
@@ -73,7 +72,7 @@ services:
         condition: service_healthy
     labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.pvz.rule=Host(`pvz.sdsprinter.ru`) || Host(`sdsprinter.ru`) || Host(`10.0.2.2`)"
+    - "traefik.http.routers.pvz.rule=Host(`sdsprinter.ru`)"
     - "traefik.http.routers.pvz.entrypoints=web"
     - "traefik.http.services.pvz.loadbalancer.server.port=8000"
 
