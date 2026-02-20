@@ -88,7 +88,7 @@ class Order(models.Model):
     ]
 
     customer = models.ForeignKey(
-        AppUser,
+        TelegramUser,
         on_delete=models.CASCADE,
         related_name="orders",
         verbose_name="Пользователь",
