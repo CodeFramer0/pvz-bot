@@ -1,6 +1,7 @@
 import logging
 
 import aiohttp
+from aiohttp import FormData
 
 logger = logging.getLogger("BaseAPI")
 
@@ -87,6 +88,32 @@ class BaseAPI:
         url = self._build_url(id=id)
         session = await self.get_session()
         async with session.delete(url, headers=await self._headers()) as resp:
+            return await self._process_response(resp)
+
+    async def post_multipart(
+        self, path: str = "", json: dict | None = None, files: dict | None = None
+    ):
+        url = self._build_url(path=path)
+        session = await self.get_session()
+        headers = await self._headers()
+        headers.pop("Content-Type", None)
+
+        form = FormData()
+
+        if json:
+            for k, v in json.items():
+                form.add_field(k, str(v))
+
+        if files:
+            for name, file in files.items():
+                form.add_field(
+                    name,
+                    file,
+                    filename=getattr(file, "name", "file.jpg"),
+                    content_type="image/jpeg",
+                )
+
+        async with session.post(url, data=form, headers=headers) as resp:
             return await self._process_response(resp)
 
     @classmethod

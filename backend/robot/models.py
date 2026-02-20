@@ -92,7 +92,7 @@ class Order(models.Model):
         ("CardNotLinked", _("Банковская карта не привязана")),
         ("ContactManager", _("Свяжитесь с менеджером.")),
         ("AvailableForPickup", _("Готов к выдаче")),
-        ("Received",_("Заказ получен в пункте выдачи"))
+        ("Received", _("Заказ получен в пункте выдачи")),
     ]
 
     customer = models.ForeignKey(

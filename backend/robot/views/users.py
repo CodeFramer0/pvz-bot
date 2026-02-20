@@ -3,13 +3,9 @@ from drf_spectacular.utils import extend_schema_view
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from ..schemas.users import (
-    users_create_schema,
-    users_destroy_schema,
-    users_list_schema,
-    users_retrieve_schema,
-    users_update_schema,
-)
+from ..schemas.users import (users_create_schema, users_destroy_schema,
+                             users_list_schema, users_retrieve_schema,
+                             users_update_schema)
 from ..serializers import UserSerializer
 
 AppUser = get_user_model()

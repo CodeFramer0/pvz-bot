@@ -8,14 +8,12 @@ from rest_framework.response import Response
 
 from ..filters import TelegramUserFilter
 from ..models import TelegramUser
-from ..schemas.telegram_users import (
-    telegram_users_bind_user_schema,
-    telegram_users_create_schema,
-    telegram_users_destroy_schema,
-    telegram_users_list_schema,
-    telegram_users_retrieve_schema,
-    telegram_users_update_schema,
-)
+from ..schemas.telegram_users import (telegram_users_bind_user_schema,
+                                      telegram_users_create_schema,
+                                      telegram_users_destroy_schema,
+                                      telegram_users_list_schema,
+                                      telegram_users_retrieve_schema,
+                                      telegram_users_update_schema)
 from ..serializers.telegram_users import TelegramUserSerializer
 
 AppUser = get_user_model()
@@ -49,22 +47,21 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
             return Response({"email": "Обязательное поле"}, status=400)
 
         if AppUser.objects.filter(email=email).exists():
-            return Response({"email": "Пользователь с таким email уже существует"}, status=400)
+            return Response(
+                {"email": "Пользователь с таким email уже существует"}, status=400
+            )
 
         # сгенерировать username на базе TG ID или случайный
         username = f"tg_{telegram_user.user_id}_{get_random_string(5)}"
 
         password = get_random_string(12)
         user = AppUser.objects.create_user(
-            username=username,
-            email=email,
-            password=password
+            username=username, email=email, password=password
         )
 
         telegram_user.app_user = user
         telegram_user.save(update_fields=["app_user"])
 
         return Response(
-            {"id": user.id, "email": user.email, "password": password},
-            status=200
+            {"id": user.id, "email": user.email, "password": password}, status=200
         )

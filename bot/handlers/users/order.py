@@ -2,15 +2,14 @@ from io import BytesIO
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToForwardNotFound
+from aiogram.utils.exceptions import (MessageCantBeDeleted,
+                                      MessageToForwardNotFound)
 from api.endpoints import OrderAPI, PickupPointAPI, TelegramUserAPI
 from keyboards.inline import order_keyboards
-from keyboards.inline.callback_data import (
-    cb_order_action,
-    cb_order_marketplace_action,
-    cb_order_pickup_point_action,
-)
-from loader import bot, dp,telegram_user_api, order_api, pickup_point_api
+from keyboards.inline.callback_data import (cb_order_action,
+                                            cb_order_marketplace_action,
+                                            cb_order_pickup_point_action)
+from loader import bot, dp, order_api, pickup_point_api, telegram_user_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -22,10 +21,8 @@ async def handle_photo(message: types.Message, state: FSMContext, user):
     photo = message.photo[-1]
     file_id = photo.file_id
 
-    file = await bot.get_file(file_id)
-    file_path = file.file_path
+    await state.update_data(file_id=file_id)
     await message.delete()
-    await state.update_data(file_path=file_path)
     message = await message.answer(
         "Отлично!\n<strong>Теперь введите ФИО.</strong>",
         reply_markup=order_keyboards.cancel(),
@@ -121,17 +118,17 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
     amount = user_data.get("amount")
-    file_path = user_data.get("file_path")
+    file_id = user_data.get("file_id")
     pickup_point_id = user_data.get("pickup_point_id")
     comment = message.text
 
-    image_data = await bot.download_file(file_path)
+    image_data = await bot.download_file_by_id(file_id)
     image_bytes = BytesIO(image_data.getvalue())
 
     image_bytes.name = "image.jpg"
 
-    order = await order_api.post(
-        body={
+    order = await order_api.post_multipart(
+        json={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
             "customer": user["id"],
@@ -191,18 +188,18 @@ async def skip(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
     user_data = await state.get_data()
     full_name = user_data.get("full_name")
-    file_path = user_data.get("file_path")
+    file_id = user_data.get("file_id")
     pickup_point_id = user_data.get("pickup_point_id")
     amount = user_data.get("amount")
     comment = ""
 
-    image_data = await bot.download_file(file_path)
+    image_data = await bot.download_file_by_id(file_id)
     image_bytes = BytesIO(image_data.getvalue())
 
     image_bytes.name = "image.jpg"
 
-    order = await order_api.post(
-        body={
+    order = await order_api.post_multipart(
+        json={
             "full_name": full_name,
             "pickup_point": pickup_point_id,
             "customer": user["id"],

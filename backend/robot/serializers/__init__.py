@@ -5,17 +5,10 @@ robot/serializers/__init__.py
 """
 
 from .auth import EmailPasswordTokenObtainPairSerializer
-from .orders import (
-    OrderCreateSerializer,
-    OrderDetailSerializer,
-    OrderListSerializer,
-    OrderUpdateSerializer,
-)
-from .pickup_points import (
-    PickupPointDetailSerializer,
-    PickupPointListSerializer,
-    PickupPointSerializer,
-)
+from .orders import (OrderCreateSerializer, OrderDetailSerializer,
+                     OrderListSerializer, )
+from .pickup_points import (PickupPointDetailSerializer,
+                            PickupPointListSerializer, PickupPointSerializer)
 from .telegram_users import TelegramUserSerializer
 from .users import UserSerializer
 
@@ -30,7 +23,6 @@ __all__ = [
     "OrderListSerializer",
     "OrderDetailSerializer",
     "OrderCreateSerializer",
-    "OrderUpdateSerializer",
     # PickupPoint Serializers
     "PickupPointSerializer",
     "PickupPointListSerializer",

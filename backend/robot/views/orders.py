@@ -6,19 +6,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ..models import Order
-from ..schemas.orders import (
-    orders_create_schema,
-    orders_destroy_schema,
-    orders_list_schema,
-    orders_retrieve_schema,
-    orders_update_schema,
-    orders_update_status_schema,
-)
-from ..serializers import (
-    OrderCreateSerializer,
-    OrderDetailSerializer,
-    OrderListSerializer,
-)
+from ..schemas.orders import (orders_create_schema, orders_destroy_schema,
+                              orders_list_schema, orders_retrieve_schema,
+                              orders_update_schema,
+                              orders_update_status_schema)
+from ..serializers import (OrderCreateSerializer, OrderDetailSerializer,
+                           OrderListSerializer)
 
 
 @extend_schema_view(

@@ -1,6 +1,7 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 @use 'animations';
+@use "sass:color";
 
 // ────────────────────────────────────────────────────────────
 // PAGE BASE
@@ -18,7 +19,9 @@
 // FORM ELEMENTS
 // ────────────────────────────────────────────────────────────
 
-.pvz-form-group  { margin-bottom: 20px; }
+.pvz-form-group {
+  margin-bottom: 20px;
+}
 
 .pvz-form-label {
   display: block;
@@ -34,14 +37,19 @@
 }
 
 .pvz-form-input--textarea {
-  :deep(.q-field__control) { border-radius: $radius-md; min-height: auto; }
-  :deep(textarea)           { min-height: 80px; }
+  :deep(.q-field__control) {
+    border-radius: $radius-md;
+    min-height: auto;
+  }
+  :deep(textarea) {
+    min-height: 80px;
+  }
 }
 
 .pvz-form-input--code {
   @include field-control;
   :deep(input) {
-    font-size: 20px !important; // override platform 16px rule
+    font-size: 20px;
     font-weight: $font-weight-semibold;
     letter-spacing: 4px;
     text-align: center;
@@ -55,7 +63,6 @@
 .pvz-btn-primary {
   @include action-btn;
   box-shadow: $shadow-brand;
-  letter-spacing: 0.5px;
 }
 
 .pvz-btn-back {
@@ -69,7 +76,7 @@
   gap: 12px;
   margin-top: 24px;
 
-  @include mobile {
+  @media (max-width: 600px) {
     grid-template-columns: 1fr;
     .pvz-btn-back { order: 2; }
   }
@@ -94,15 +101,23 @@
 .pvz-badge {
   @include status-badge;
 
-  &--success { background: $color-success-bg; color: darken($color-success, 5%); }
+  &--success { 
+    background: $color-success-bg; 
+    color: color.adjust($color-success, $lightness: -5%); 
+  }
   &--warning { background: $color-warning-bg; color: $color-warning; }
   &--info    { background: $color-info-bg;    color: $color-info; }
   &--default { background: $color-bg-page;    color: $color-text-muted; }
-  &--lg      { padding: 8px 16px; border-radius: $radius-md; font-size: 12px; }
+
+  &--lg {
+    padding: 8px 16px;
+    border-radius: $radius-md;
+    font-size: 12px;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
-// PROGRESS STEPS
+// PROGRESS STEPS (shared between add-order & register)
 // ────────────────────────────────────────────────────────────
 
 .pvz-steps {
@@ -151,20 +166,23 @@
     background: $color-border;
     margin: 0 12px;
     transition: all 0.3s ease;
-    margin-bottom: 22px;
+    margin-bottom: 22px; // offset for label
 
-    &.active { background: $gradient-brand; }
+    &.active {
+      background: $gradient-brand;
+    }
   }
 
-  @include mobile {
+  @media (max-width: 600px) {
     padding: 0;
+
     .pvz-step-line { width: 30px; margin: 0 8px 22px; }
     .pvz-step__label { font-size: 11px; }
   }
 }
 
 // ────────────────────────────────────────────────────────────
-// CUSTOM TABS
+// TABS — app navigation style
 // ────────────────────────────────────────────────────────────
 
 .pvz-tabs {
@@ -180,14 +198,16 @@
 }
 
 // ────────────────────────────────────────────────────────────
-// SEARCH
+// SEARCH INPUT
 // ────────────────────────────────────────────────────────────
 
 .pvz-search {
   border-radius: $radius-lg;
   box-shadow: $shadow-md;
 
-  :deep(.q-field__control) { border-radius: $radius-lg; }
+  :deep(.q-field__control) {
+    border-radius: $radius-lg;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -207,20 +227,59 @@
   align-items: center;
   justify-content: center;
 
-  @include hover {
-    &:hover { border-color: $primary-start; background: #f0f3ff; }
+  &:hover,
+  &--drag-over {
+    border-color: $primary-start;
+    background: #f0f3ff;
   }
 
-  &--drag-over { border-color: $primary-start; background: #e0e7ff; transform: scale(1.02); }
-  &--has-image { padding: 20px; border-style: solid; border-color: $color-success; }
+  &--drag-over { transform: scale(1.02); background: #e0e7ff; }
 
-  &__placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  &__text { margin: 0; font-size: 16px; font-weight: $font-weight-semibold; color: $color-text-body; }
-  &__hint { margin: 0; font-size: 13px; color: $color-text-hint; }
+  &--has-image {
+    padding: 20px;
+    border-style: solid;
+    border-color: $color-success;
+  }
 
-  &__preview { position: relative; width: 100%; }
-  &__image   { max-width: 100%; max-height: 300px; border-radius: $radius-md; box-shadow: $shadow-md; }
-  &__remove  { position: absolute; top: -10px; right: -10px; background: $color-white; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  &__placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 16px;
+    font-weight: $font-weight-semibold;
+    color: $color-text-body;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: 13px;
+    color: $color-text-hint;
+  }
+
+  &__preview {
+    position: relative;
+    width: 100%;
+  }
+
+  &__image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: $radius-md;
+    box-shadow: $shadow-md;
+  }
+
+  &__remove {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: $color-white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -230,7 +289,7 @@
 .pvz-order-card {
   @include card($radius-xl, 16px);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
 
   &:active { transform: scale(0.98); }
 
@@ -241,7 +300,11 @@
     margin-bottom: 12px;
   }
 
-  &__marketplace { display: flex; gap: 12px; align-items: center; }
+  &__marketplace {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
 
   &__icon {
     font-size: 32px;
@@ -254,8 +317,18 @@
     border-radius: $radius-md;
   }
 
-  &__name { margin: 0; font-size: 16px; font-weight: $font-weight-semibold; color: $color-text-dark; }
-  &__id   { margin: 2px 0 0; font-size: 12px; color: #95a5a6; }
+  &__name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: $font-weight-semibold;
+    color: $color-text-dark;
+  }
+
+  &__id {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: #95a5a6;
+  }
 
   &__body {
     display: flex;
@@ -270,12 +343,19 @@
       font-size: 13px;
       color: $color-text-body;
 
-      .amount  { font-weight: $font-weight-semibold; color: $primary-start; }
-      .address { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .amount { font-weight: $font-weight-semibold; color: $primary-start; }
+      .address {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   }
 
-  &__footer { display: flex; justify-content: flex-end; }
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -294,12 +374,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pvz-stat-card {
   @include card($radius-xl, 20px);
   text-align: center;
-  transition: all 0.25s ease;
+  transition: transform 0.2s;
 
   &:active { transform: scale(0.95); }
 
@@ -313,13 +397,37 @@
     justify-content: center;
   }
 
-  &__number { margin: 0; font-size: 28px; font-weight: $font-weight-bold; color: $color-text-dark; }
-  &__label  { margin: 4px 0 0; font-size: 12px; color: $color-text-muted; font-weight: $font-weight-medium; }
+  &__number {
+    margin: 0;
+    font-size: 28px;
+    font-weight: $font-weight-bold;
+    color: $color-text-dark;
+  }
 
-  &--orange .pvz-stat-card__icon { background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%); color: $color-warning; }
-  &--green  .pvz-stat-card__icon { background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%); color: #16a34a; }
-  &--blue   .pvz-stat-card__icon { background: linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%); color: $color-info; }
-  &--grey   .pvz-stat-card__icon { background: linear-gradient(135deg, $color-bg-card 0%, $color-border 100%); color: $color-text-muted; }
+  &__label {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: $color-text-muted;
+    font-weight: $font-weight-medium;
+  }
+
+  // Color variants
+  &--orange .pvz-stat-card__icon {
+    background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+    color: $color-warning;
+  }
+  &--green .pvz-stat-card__icon {
+    background: linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%);
+    color: #16a34a;
+  }
+  &--blue .pvz-stat-card__icon {
+    background: linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%);
+    color: $color-info;
+  }
+  &--grey .pvz-stat-card__icon {
+    background: linear-gradient(135deg, $color-bg-card 0%, $color-border 100%);
+    color: $color-text-muted;
+  }
 }
 
 .pvz-stat-card-hero {
@@ -327,7 +435,8 @@
   text-align: center;
   box-shadow: $shadow-lg;
 
-  &__emoji  { font-size: 64px; margin-bottom: 16px; }
+  &__emoji { font-size: 64px; margin-bottom: 16px; }
+
   &__number {
     margin: 0;
     font-size: 48px;
@@ -337,11 +446,17 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  &__label  { margin: 8px 0 0; font-size: 16px; color: $color-text-muted; font-weight: $font-weight-medium; }
+
+  &__label {
+    margin: 8px 0 0;
+    font-size: 16px;
+    color: $color-text-muted;
+    font-weight: $font-weight-medium;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
-// AUTH PAGE
+// AUTH / REGISTER PAGES
 // ────────────────────────────────────────────────────────────
 
 .pvz-auth-page {
@@ -353,9 +468,6 @@
   padding: 20px;
   position: relative;
   overflow: hidden;
-
-  @include safe-top(20px);
-  @include safe-bottom(20px);
 
   @include blobs;
 
@@ -373,7 +485,9 @@
     box-shadow: $shadow-xl;
     animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 
-    @include mobile { padding: 32px 24px; }
+    @media (max-width: 480px) {
+      padding: 32px 24px;
+    }
   }
 }
 
@@ -391,11 +505,25 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+    animation: bounce 0.8s ease-in-out;
     font-size: 40px;
   }
 
-  &__title    { margin: 0 0 8px; font-size: 28px; font-weight: $font-weight-bold; color: $color-text-dark; letter-spacing: -0.5px; @include mobile { font-size: 24px; } }
-  &__subtitle { margin: 0; font-size: 14px; color: $color-text-muted; }
+  &__title {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: $font-weight-bold;
+    color: $color-text-dark;
+    letter-spacing: -0.5px;
+
+    @media (max-width: 480px) { font-size: 24px; }
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: $color-text-muted;
+  }
 }
 
 .pvz-auth-tabs {
@@ -408,12 +536,20 @@
   padding-top: 20px;
   border-top: 1px solid $color-border;
 
-  &__text { font-size: 14px; color: $color-text-muted; margin-right: 4px; }
-  &__link { font-weight: $font-weight-semibold; font-size: 14px; }
+  &__text {
+    font-size: 14px;
+    color: $color-text-muted;
+    margin-right: 4px;
+  }
+
+  &__link {
+    font-weight: $font-weight-semibold;
+    font-size: 14px;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
-// TELEGRAM SECTION
+// TELEGRAM SECTION (profile)
 // ────────────────────────────────────────────────────────────
 
 .pvz-telegram-linked {
@@ -433,22 +569,21 @@
   border-radius: $radius-md;
   text-align: center;
 
-  p { margin: 0 0 16px; font-size: 13px; color: $color-text-muted; line-height: 1.5; }
+  p {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: $color-text-muted;
+    line-height: 1.5;
+  }
 }
 
 // ────────────────────────────────────────────────────────────
-// DETAIL DIALOG
+// DETAIL DIALOG (bottom sheet style)
 // ────────────────────────────────────────────────────────────
 
 .pvz-detail-dialog {
   border-radius: 24px 24px 0 0;
   max-width: 100%;
-
-  @include desktop {
-    border-radius: $radius-2xl;
-    max-width: 480px;
-    width: 90vw;
-  }
 
   &__header {
     background: $gradient-brand;
@@ -460,7 +595,12 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      h5 { margin: 0; font-size: 20px; font-weight: $font-weight-semibold; }
+
+      h5 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: $font-weight-semibold;
+      }
     }
   }
 
@@ -468,6 +608,7 @@
 
   .detail-section {
     margin-bottom: 24px;
+
     &:last-child { margin-bottom: 0; }
 
     .section-title {
@@ -487,10 +628,19 @@
       font-size: 16px;
       color: $color-text-dark;
       font-weight: $font-weight-medium;
-      &--amount { font-size: 24px; font-weight: $font-weight-bold; color: $primary-start; }
+
+      &--amount {
+        font-size: 24px;
+        font-weight: $font-weight-bold;
+        color: $primary-start;
+      }
     }
 
-    .section-sub { margin: 4px 0 0; font-size: 14px; color: $color-text-muted; }
+    .section-sub {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: $color-text-muted;
+    }
   }
 }
 
@@ -533,11 +683,21 @@
       align-items: center;
       padding: 12px 0;
       border-bottom: 1px solid $color-border;
+
       &:last-child { border-bottom: none; }
     }
 
-    .summary-label { font-size: 14px; color: $color-text-muted; font-weight: $font-weight-medium; }
-    .summary-value { font-size: 15px; color: $color-text-dark; font-weight: $font-weight-semibold; }
+    .summary-label {
+      font-size: 14px;
+      color: $color-text-muted;
+      font-weight: $font-weight-medium;
+    }
+
+    .summary-value {
+      font-size: 15px;
+      color: $color-text-dark;
+      font-weight: $font-weight-semibold;
+    }
   }
 }
 
@@ -551,9 +711,12 @@
   padding: 24px $page-padding-x;
   border-radius: 0 0 24px 24px;
   margin-bottom: 20px;
-  @include safe-top(24px);
 
-  &__inner { display: flex; justify-content: space-between; align-items: center; }
+  &__inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
   &__greeting {
     margin: 0;
@@ -561,10 +724,16 @@
     font-size: 24px;
     font-weight: $font-weight-bold;
     letter-spacing: -0.5px;
-    @include mobile { font-size: 20px; }
+
+    @media (max-width: 600px) { font-size: 20px; }
   }
 
-  &__sub    { margin: 4px 0 0; color: rgba(255,255,255,0.8); font-size: 14px; }
+  &__sub {
+    margin: 4px 0 0;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+  }
+
   &__profile-btn { color: $color-white; font-size: 32px; }
 }
 
@@ -574,7 +743,6 @@
 
 .pvz-fab {
   box-shadow: $shadow-brand;
-  @include desktop { display: none; } // на десктопе FAB скрыт — кнопка в шапке
 }
 
 // ────────────────────────────────────────────────────────────
@@ -616,11 +784,18 @@
     z-index: 1;
   }
 
-  &__name  { margin: 16px 0 4px; color: $color-white; font-size: 24px; font-weight: $font-weight-bold; letter-spacing: -0.5px;
-    @include desktop { color: $color-text-dark; margin-top: 0; }
+  &__name {
+    margin: 16px 0 4px;
+    color: $color-white;
+    font-size: 24px;
+    font-weight: $font-weight-bold;
+    letter-spacing: -0.5px;
   }
-  &__email { margin: 0 0 8px; color: rgba(255,255,255,0.8); font-size: 14px;
-    @include desktop { color: $color-text-muted; }
+
+  &__email {
+    margin: 0 0 8px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
   }
 }
 
@@ -634,15 +809,17 @@
   gap: 12px;
   margin-bottom: 24px;
 
-  @include mobile { gap: 8px; }
+  @media (max-width: 600px) { gap: 8px; }
 
   .stat-item {
     @include glass-card($radius-lg);
     padding: 16px 12px;
     text-align: center;
     transition: transform 0.2s;
+
     &:active { transform: scale(0.95); }
-    @include mobile { padding: 12px 8px; }
+
+    @media (max-width: 600px) { padding: 12px 8px; }
   }
 
   .stat-icon {
@@ -653,7 +830,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    @include mobile { width: 40px; height: 40px; }
+
+    @media (max-width: 600px) { width: 40px; height: 40px; }
   }
 
   .stat-value {
@@ -661,14 +839,17 @@
     font-weight: $font-weight-bold;
     color: $color-white;
     margin-bottom: 2px;
-    @include mobile { font-size: 20px; }
-    @include desktop { color: $color-text-dark; }
+
+    @media (max-width: 600px) { font-size: 20px; }
   }
 
   .stat-label {
     font-size: 11px;
     color: rgba(255,255,255,0.8);
     font-weight: $font-weight-medium;
-    @include desktop { color: $color-text-muted; }
   }
 }
+
+
+
+

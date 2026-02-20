@@ -1,11 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import (
-    KeyboardButton,
-    Message,
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
-)
+from aiogram.types import (KeyboardButton, Message, ReplyKeyboardMarkup,
+                           ReplyKeyboardRemove)
 from loader import auth_api, dp, telegram_user_api, users_api
 from states.profile import ProfileStates
 

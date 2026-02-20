@@ -1,8 +1,4 @@
-"""
-robot/serializers/orders.py
-
-Сериализаторы для заказов
-"""
+# robot/serializers/orders.py
 
 from rest_framework import serializers
 
@@ -12,8 +8,6 @@ from .users import UserSerializer
 
 
 class OrderListSerializer(serializers.ModelSerializer):
-    """Сериализатор заказа (список)"""
-
     customer = UserSerializer(read_only=True)
     pickup_point = PickupPointSerializer(read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -34,8 +28,6 @@ class OrderListSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
-    """Сериализатор заказа (детали)"""
-
     customer = UserSerializer(read_only=True)
     pickup_point = PickupPointSerializer(read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -58,13 +50,17 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания заказа"""
-
     pickup_point_id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = Order
-        fields = ("full_name", "amount", "comment", "barcode_image", "pickup_point_id")
+        fields = (
+            "full_name",
+            "amount",
+            "comment",
+            "barcode_image",
+            "pickup_point_id",
+        )
 
     def validate_pickup_point_id(self, value):
         if not PickupPoint.objects.filter(id=value).exists():
@@ -79,19 +75,15 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
+        request = self.context["request"]
+
         pickup_point_id = validated_data.pop("pickup_point_id")
         pickup_point = PickupPoint.objects.get(id=pickup_point_id)
+
         order = Order.objects.create(
-            customer=self.context["request"].user,
+            customer=request.user,   # берём из JWT
             pickup_point=pickup_point,
-            **validated_data
+            **validated_data,
         )
+
         return order
-
-
-class OrderUpdateSerializer(serializers.ModelSerializer):
-    """Сериализатор для обновления заказа"""
-
-    class Meta:
-        model = Order
-        fields = ("full_name", "amount", "comment")

@@ -10,21 +10,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import (TokenObtainPairView,
+                                            TokenRefreshView)
 
 from ..models import AppUser
-from ..schemas.auth import (
-    change_password_schema,
-    current_user_schema,
-    email_login_schema,
-    logout_schema,
-    refresh_token_schema,
-    send_verification_code_schema,
-    username_login_schema,
-    verify_code_schema,
-    verify_token_schema,
-)
-from ..serializers import EmailPasswordTokenObtainPairSerializer, UserSerializer
+from ..schemas.auth import (change_password_schema, current_user_schema,
+                            email_login_schema, logout_schema,
+                            refresh_token_schema,
+                            send_verification_code_schema,
+                            username_login_schema, verify_code_schema,
+                            verify_token_schema)
+from ..serializers import (EmailPasswordTokenObtainPairSerializer,
+                           UserSerializer)
 from ..utils import generate_numeric_code, send_verification_email
 
 AppUser = get_user_model()
@@ -185,7 +182,6 @@ class VerifyCodeView(APIView):
         return Response({"temporary_token": temp_token}, status=status.HTTP_200_OK)
 
 
-
 class ForgotPasswordView(APIView):
     permission_classes = (AllowAny,)
 
@@ -212,7 +208,7 @@ class ForgotPasswordView(APIView):
         # Отправляем email (HTML вариант)
         send_verification_email(
             email,
-            f"Сброс пароля", 
+            f"Сброс пароля",
             html=f"""
             <html>
               <body style="font-family: Arial; text-align: center;">
@@ -225,12 +221,13 @@ class ForgotPasswordView(APIView):
                 <p>Ссылка действительна 10 минут.</p>
               </body>
             </html>
-            """
+            """,
         )
 
         return Response(
             {"detail": "Если email зарегистрирован, ссылка отправлена"}, status=200
         )
+
 
 class ResetPasswordView(APIView):
     permission_classes = (AllowAny,)
@@ -254,7 +251,9 @@ class ResetPasswordView(APIView):
         if new_password != new_password_confirm:
             return Response({"detail": "Пароли не совпадают"}, status=400)
         if len(new_password) < 8:
-            return Response({"detail": "Пароль должен быть минимум 8 символов"}, status=400)
+            return Response(
+                {"detail": "Пароль должен быть минимум 8 символов"}, status=400
+            )
 
         user = AppUser.objects.filter(email=email).first()
         if not user:

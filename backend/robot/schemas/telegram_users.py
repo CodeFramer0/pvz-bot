@@ -4,7 +4,8 @@ robot/schemas/telegram_users.py
 OpenAPI schemas для TelegramUser endpoints
 """
 
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (OpenApiExample, OpenApiResponse,
+                                   extend_schema)
 
 # ============= LIST SCHEMA =============
 telegram_users_list_schema = extend_schema(
