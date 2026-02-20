@@ -73,7 +73,7 @@ services:
         condition: service_healthy
     labels:
     - "traefik.enable=true"
-    - "traefik.http.routers.pvz.rule=Host(`pvz.localhost`) || Host(`localhost`) || Host(`10.0.2.2`)"
+    - "traefik.http.routers.pvz.rule=Host(`pvz.sdsprinter.ru`) || Host(`sdsprinter.ru`) || Host(`10.0.2.2`)"
     - "traefik.http.routers.pvz.entrypoints=web"
     - "traefik.http.services.pvz.loadbalancer.server.port=8000"
 
@@ -139,13 +139,13 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password}
-      MINIO_DOMAIN: "s3.localhost"
-      MINIO_BROWSER_REDIRECT_URL: "http://console.s3.localhost"
+      MINIO_DOMAIN: "s3.sdsprinter.ru"
+      MINIO_BROWSER_REDIRECT_URL: "http://console.s3.sdsprinter.ru"
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      test: ["CMD", "curl", "-f", "http://sdsprinter.ru:9000/minio/health/ready"]
       interval: 5s
       timeout: 2s
       retries: 12
@@ -153,18 +153,18 @@ services:
           - "traefik.enable=true"
           
           # Основной API S3
-          - "traefik.http.routers.minio-api.rule=Host(`s3.localhost`)"
+          - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`)"
           - "traefik.http.routers.minio-api.entrypoints=web"
           - "traefik.http.routers.minio-api.service=minio-api-svc"
 
           # ПОДДОМЕНЫ ДЛЯ СТАТИКИ И МЕДИА
           # Мы объединяем их в один роутер, который смотрит на порт 9000
-          - "traefik.http.routers.minio-static.rule=Host(`static.s3.localhost`) || Host(`media.s3.localhost`)"
+          - "traefik.http.routers.minio-static.rule=Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
           - "traefik.http.routers.minio-static.entrypoints=web"
           - "traefik.http.routers.minio-static.service=minio-api-svc"
 
           # Консоль управления
-          - "traefik.http.routers.minio-console.rule=Host(`console.s3.localhost`)"
+          - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
           - "traefik.http.routers.minio-console.entrypoints=web"
           - "traefik.http.routers.minio-console.service=minio-console-svc"
 
@@ -206,11 +206,11 @@ services:
   #     - "9090:9090"
   #   labels:
   #     - "traefik.enable=true"
-  #     - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+  #     - "traefik.http.routers.prometheus.rule=Host(`prometheus.sdsprinter.ru`)"
   #     - "traefik.http.routers.prometheus.entrypoints=web"
   #     - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
   #   healthcheck:
-  #     test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+  #     test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://sdsprinter.ru:9090/-/healthy"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 5
@@ -224,7 +224,7 @@ services:
   #     GF_SECURITY_ADMIN_USER: admin
   #     GF_SECURITY_ADMIN_PASSWORD: admin123
   #     GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
-  #     GF_SERVER_ROOT_URL: http://grafana.localhost
+  #     GF_SERVER_ROOT_URL: http://grafana.sdsprinter.ru
   #   volumes:
   #     - grafana_data:/var/lib/grafana
   #     - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
@@ -232,11 +232,11 @@ services:
   #     - "3000:3000"
   #   labels:
   #     - "traefik.enable=true"
-  #     - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+  #     - "traefik.http.routers.grafana.rule=Host(`grafana.sdsprinter.ru`)"
   #     - "traefik.http.routers.grafana.entrypoints=web"
   #     - "traefik.http.services.grafana.loadbalancer.server.port=3000"
   #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+  #     test: ["CMD", "curl", "-f", "http://sdsprinter.ru:3000/api/health"]
   #     interval: 10s
   #     timeout: 5s
   #     retries: 5
