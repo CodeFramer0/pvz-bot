@@ -17,4 +17,5 @@ AppUser = get_user_model()
 def order_status_changed(sender, instance, created, **kwargs):
     if not created:
         message = f"Статус вашего заказа №{instance.id} изменился на '{instance.get_status_display()}'."
-        # send_telegram_message.delay(instance.customer.user_id, message)
+        tg_user = TelegramUser.objects.get(id=instance.customer.id)
+        send_telegram_message.delay(tg_user.user_id, message)
