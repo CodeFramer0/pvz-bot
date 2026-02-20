@@ -1,0 +1,56 @@
+[
+{
+  "model": "robot.AppUser",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$1000000$BjJjv4ZcgHRV2beLB5Vp1Y$Cuah9typBqB/TioUFjjF0gcRUrcXMkEqn24/o/Z27FY=",
+    "last_login": "2026-02-15T08:08:20.944Z",
+    "is_superuser": true,
+    "username": "root",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2024-10-05T12:13:31.207Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "robot.AppUser",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$870000$MB7YmO3ZEinBPeidZY2Myr$F2WGXwiChozqXyj5SViRdX1J9rBIbN53QtBxR25S3CI=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "kaisf",
+    "first_name": "Nikitas",
+    "last_name": "Konstantinidis",
+    "email": "nikitasxenon@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2024-10-06T09:08:52Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "robot.AppUser",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$870000$Dnr4FWbY48DrjZaeOMSyV4$/mSILv+qIJVWdmP6EhP0T0LZgi7b3WwoKW1UlcISv+Q=",
+    "last_login": "2024-12-13T17:00:26.639Z",
+    "is_superuser": true,
+    "username": "Марина",
+    "first_name": "Marina",
+    "last_name": "Kolesnikova",
+    "email": "marinkaal0207@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2024-12-13T16:48:16Z",
+    "groups": [],
+    "user_permissions": []
+  }
+}
+]

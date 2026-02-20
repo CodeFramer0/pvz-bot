@@ -94,6 +94,7 @@ INSTALLED_APPS = [
     "django_prometheus",
     # Local Apps
     "robot",
+    "dbbackup",
     "django_cleanup.apps.CleanupConfig",
 ]
 
