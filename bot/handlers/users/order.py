@@ -133,29 +133,48 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     pickup_point_id = user_data.get("pickup_point_id")
     marketplace_id = user_data.get("marketplace_id")
 
+    # Проверяем TelegramUser и привязку к AppUser
+    try:
+        telegram_user = await TelegramUserAPI().get(id=user["app_user"])
+    except APIError as e:
+        await bot.send_message(chat_id, f"Ошибка при получении Telegram пользователя: {e.detail}")
+        return None
+
+    if not telegram_user.get("app_user"):
+        await bot.send_message(chat_id, "Ошибка: Ваш Telegram аккаунт не привязан к AppUser.")
+        return None
+
+    try:
+        customer_id = int(telegram_user["app_user"])
+    except (TypeError, ValueError):
+        await bot.send_message(chat_id, "Ошибка: неверный ID пользователя.")
+        return None
+
+    # Получаем объекты PickupPoint и Marketplace
     pickup_point = await pickup_point_api.get(id=pickup_point_id)
     marketplace = await marketplace_api.get(id=marketplace_id)
 
+    # Загружаем файл штрих-кода
     image_data = await bot.download_file_by_id(file_id)
     image_bytes = BytesIO(image_data.getvalue())
     image_bytes.name = "image.jpg"
+
+    # Создаем заказ через API
     try:
         order = await order_api.post_multipart(
             json={
                 "full_name": full_name,
                 "pickup_point_id": pickup_point_id,
                 "marketplace_id": marketplace_id,
-                "customer_id": user["app_user"],
+                "customer_id": customer_id,
                 "amount": amount,
                 "comment": comment,
             },
             files={"barcode_image": image_bytes},
         )
     except APIError as e:
-        # Показываем пользователю текст ошибки от API
         detail = e.detail
         if isinstance(detail, dict):
-            # Если это словарь ошибок от DRF, склеиваем строки
             messages = []
             for k, v in detail.items():
                 if isinstance(v, list):
@@ -167,15 +186,17 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
             await bot.send_message(chat_id, f"Ошибка при создании заказа: {detail}")
         return None
 
+    # Формируем строку маркетплейсов
     marketplaces_names = (
         ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", []))
         if pickup_point.get("marketplaces")
         else marketplace["name"]
     )
 
+    # Отправляем подтверждение пользователю
     await bot.send_photo(
         chat_id,
-        photo=types.InputFile(image_data),
+        photo=image_data,
         caption=(
             f"<strong>Ваш заказ №{order['id']} успешно создан! 🎉</strong>\n"
             f"<strong>ФИО:</strong> {order['full_name']}\n"
@@ -187,6 +208,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>"
         ),
     )
+
     return order
 
 @dp.message_handler(state=OrderStates.waiting_for_comment)
