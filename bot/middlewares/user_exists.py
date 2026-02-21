@@ -36,7 +36,7 @@ class EnsureUserMiddleware(BaseMiddleware):
         if need_update:
             return await self.api.patch(
                 id=user["id"],
-                body={
+                json={
                     "user_id": user_id,
                     "name": tg_user.full_name,
                     "nick_name": nick_name,
