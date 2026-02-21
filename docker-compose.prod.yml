@@ -76,12 +76,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.pvz.rule=Host(`sdsprinter.ru`)"
-    - "traefik.http.routers.pvz.entrypoints=websecure"
-    - "traefik.http.routers.pvz.tls.certresolver=le"
-    - "traefik.http.services.pvz.loadbalancer.server.port=8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pvz.rule=Host(`sdsprinter.ru`)"
+      - "traefik.http.routers.pvz.entrypoints=websecure"
+      - "traefik.http.routers.pvz.tls.certresolver=le"
+      - "traefik.http.services.pvz.loadbalancer.server.port=8000"
   # ---------------- Bot ----------------
   bot:
     container_name: pvz-bot
