@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
 import os
-import uui
+import uuid
 
 def barcode_upload_to(instance, filename):
     ext = filename.split('.')[-1]  # сохраняем расширение
