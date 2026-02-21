@@ -9,7 +9,7 @@ from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp, order_api, pickup_point_api, marketplace_api
+from loader import bot, dp, marketplace_api, order_api, pickup_point_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -70,7 +70,11 @@ async def choose_marketplace(
     )
 
     await OrderStates.waiting_for_pickup_point.set()
-    await state.update_data(message_id=message.message_id,marketplace=marketplace,marketplace_id=marketplace_id)
+    await state.update_data(
+        message_id=message.message_id,
+        marketplace=marketplace,
+        marketplace_id=marketplace_id,
+    )
 
 
 @dp.callback_query_handler(
@@ -144,7 +148,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
             "full_name": full_name,
             "pickup_point_id": pickup_point_id,
             "marketplace_id": marketplace_id,
-            "customer_id": user['app_user'],
+            "customer_id": user["app_user"],
             "amount": amount,
             "comment": comment,
         },
@@ -152,12 +156,17 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     )
 
     if not order:
-        await bot.send_message(chat_id, "Произошла ошибка при создании заказа. Попробуйте еще раз.")
+        await bot.send_message(
+            chat_id, "Произошла ошибка при создании заказа. Попробуйте еще раз."
+        )
         return None
 
     # Формируем список маркетплейсов, если нужно
-    marketplaces_names = ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", [])) \
-        if pickup_point.get("marketplaces") else marketplace["name"]
+    marketplaces_names = (
+        ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", []))
+        if pickup_point.get("marketplaces")
+        else marketplace["name"]
+    )
 
     # Отправляем пользователю подтверждение
     await bot.send_photo(
@@ -193,7 +202,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 async def skip(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
     user_data = await state.get_data()
-    await create_order(query.message.chat.id, user,user_data, comment="")
+    await create_order(query.message.chat.id, user, user_data, comment="")
     await delete_message(
         chat_id=query.message.chat.id, message_id=user_data["message_id"]
     )

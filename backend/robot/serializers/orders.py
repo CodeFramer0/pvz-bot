@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from ..models import Order, PickupPoint,Marketplace
+from ..models import Marketplace, Order, PickupPoint
 from .pickup_points import PickupPointSerializer
 from .users import UserSerializer
 
@@ -89,6 +89,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if customer_id:
             # если передан ботом — используем AppUser по ID
             from django.contrib.auth import get_user_model
+
             AppUser = get_user_model()
             customer = AppUser.objects.get(id=customer_id)
         else:

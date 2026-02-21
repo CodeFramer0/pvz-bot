@@ -42,6 +42,7 @@ class OrderAPI(BaseAPI):
     def __init__(self, jwt_client):
         super().__init__("orders/", jwt_client)
 
+
 class MarketplaceAPI(BaseAPI):
     def __init__(self, jwt_client):
         super().__init__("marketplaces/", jwt_client)

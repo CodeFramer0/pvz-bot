@@ -7,13 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('robot', '0004_order_marketplace'),
+        ("robot", "0004_order_marketplace"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='barcode_image',
-            field=models.ImageField(upload_to=robot.models.barcode_upload_to, verbose_name='Изображение штрих-кода'),
+            model_name="order",
+            name="barcode_image",
+            field=models.ImageField(
+                upload_to=robot.models.barcode_upload_to,
+                verbose_name="Изображение штрих-кода",
+            ),
         ),
     ]

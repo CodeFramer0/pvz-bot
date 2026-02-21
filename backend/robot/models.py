@@ -1,16 +1,17 @@
+import os
 import uuid
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
-import os
-import uuid
+
 
 def barcode_upload_to(instance, filename):
-    ext = filename.split('.')[-1]
+    ext = filename.split(".")[-1]
     filename = f"{uuid.uuid4().hex}.{ext}"
     return os.path.join("barcodes", filename)
+
 
 class AppUser(AbstractUser):
     verification_code = models.CharField(max_length=6, blank=True, null=True)

@@ -50,8 +50,7 @@ def marketplaces(available_marketplaces: list):
 
     keyboard.insert(
         InlineKeyboardButton(
-            text="Отменить ❌",
-            callback_data=cb_order_action.new(action="cancel")
+            text="Отменить ❌", callback_data=cb_order_action.new(action="cancel")
         )
     )
     return keyboard

@@ -8,11 +8,11 @@ from .auth import (ChangePasswordView, CurrentUserView,
                    EmailTokenObtainPairView, ForgotPasswordView, LogoutView,
                    RefreshTokenView, ResetPasswordView,
                    SendVerificationCodeView, VerifyCodeView, VerifyTokenView)
+from .marketplace import MarketPlaceViewSet
 from .orders import OrderViewSet
 from .pickup_points import PickupPointViewSet
 from .telegram_users import TelegramUserViewSet
 from .users import UserViewSet
-from .marketplace import MarketPlaceViewSet
 
 __all__ = [
     # Auth Views
