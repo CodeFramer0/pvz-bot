@@ -13,9 +13,6 @@ class PickPointForm(forms.ModelForm):
 
 
 class NewsletterForm(forms.Form):
-    text = forms.CharField(
-        label="Текст сообщения",
-        required=False,
-        widget=forms.Textarea(attrs={"rows": 4, "placeholder": "Введите текст..."}),
-    )
-    file = forms.FileField(label="Фото или файл", required=False)
+    text = forms.CharField(widget=forms.Textarea(attrs={"rows": 5}), label="Текст")
+    image = forms.ImageField(required=False, label="Картинка (опционально)")
+    only_verified = forms.BooleanField(required=False, label="Только подтверждённые email")

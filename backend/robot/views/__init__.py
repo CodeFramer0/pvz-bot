@@ -13,6 +13,7 @@ from .orders import OrderViewSet
 from .pickup_points import PickupPointViewSet
 from .telegram_users import TelegramUserViewSet
 from .users import UserViewSet
+from .news_letter import newsletter_view
 
 __all__ = [
     # Auth Views

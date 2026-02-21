@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from ..views import (MarketPlaceViewSet, OrderViewSet, TelegramUserViewSet,
-                     UserViewSet)
+                     UserViewSet,newsletter_view)
 
 # добавь другие ViewSet-и по аналогии
 
@@ -21,4 +21,5 @@ urlpatterns = [
     path("marketplaces/", include("robot.routers.marketplaces")),
     path("pickup-points/", include("robot.routers.pickup_points")),
     path("telegram-users/", include("robot.routers.telegram_users")),
+    path("newsletter/",newsletter_view),
 ]

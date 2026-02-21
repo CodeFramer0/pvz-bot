@@ -75,29 +75,16 @@ def dumpdata_and_send_to_telegram(self):
 
 @shared_task
 def send_mass_telegram(text=None, file_data=None, file_name=None, is_image=False):
-    async def send_all():
-        for user in TelegramUser.objects.all():
-            try:
-                if file_data:
-                    decoded = base64.b64decode(file_data)
-                    file_io = BytesIO(decoded)
-                    file_io.name = file_name
-                    file_input = InputFile(file_io, filename=file_name)
+    users = list(TelegramUser.objects.filter(is_blocked=False))
 
-                    if is_image:
-                        await settings.BOT.send_photo(
-                            chat_id=user.user_id, photo=file_input, caption=text or None
-                        )
-                    else:
-                        await settings.BOT.send_document(
-                            chat_id=user.user_id,
-                            document=file_input,
-                            caption=text or None,
-                        )
-                elif text:
+    async def send_all():
+        for user in users:
+            try:
+                if text:
                     await settings.BOT.send_message(chat_id=user.user_id, text=text)
+                await asyncio.sleep(0.05)
             except Exception as e:
-                logger.error(f"Ошибка при отправке пользователю {user.user_id}: {e}")
+                logger.error(f"Ошибка при отправке {user.user_id}: {e}")
 
     asyncio.run(send_all())
 
