@@ -24,7 +24,8 @@ DEBUG = env.bool("DEBUG", True)
 BOT_TOKEN = env.str("BOT_TOKEN")
 PROTOCOL = env.str("PROTOCOL", "http")
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
 ROOT_URLCONF = "core.urls"
 WSGI_APPLICATION = "core.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -141,13 +142,6 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost",
-    "http://pvz.localhost",
-    f"http://{MINIO_DOMAIN}",
-    "http://10.0.2.2",
-]
 
 # Swagger UI CDN от Swagger (unpkg)
 SWAGGER_CDN = "https://unpkg.com/swagger-ui-dist@4"
