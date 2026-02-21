@@ -42,7 +42,6 @@ async def handle_full_name(message: types.Message, user, state: FSMContext):
     message_id = user_data.get("message_id")
     await delete_message(chat_id=message.chat.id, message_id=message_id)
     available_marketplaces = await marketplace_api.get()
-    await message.answer(available_marketplaces)
     message = await message.answer(
         "<strong>Теперь выберите маркетплейс.</strong>",
         reply_markup=order_keyboards.marketplaces(available_marketplaces),
