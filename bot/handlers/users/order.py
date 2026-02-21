@@ -5,6 +5,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
                                       MessageToForwardNotFound)
 from api.endpoints import OrderAPI, PickupPointAPI, TelegramUserAPI
+from api.base import APIError
 from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
@@ -126,49 +127,52 @@ async def cancel(query: types.CallbackQuery, state: FSMContext, user):
 
 
 async def create_order(chat_id: int, user: dict, user_data: dict, comment: str = ""):
-    """Создает заказ через API с конкретным пользователем"""
     full_name = user_data.get("full_name")
     amount = user_data.get("amount")
     file_id = user_data.get("file_id")
     pickup_point_id = user_data.get("pickup_point_id")
     marketplace_id = user_data.get("marketplace_id")
 
-    # Получаем объекты через API
     pickup_point = await pickup_point_api.get(id=pickup_point_id)
     marketplace = await marketplace_api.get(id=marketplace_id)
 
-    # Загружаем файл штрих-кода
     image_data = await bot.download_file_by_id(file_id)
     image_bytes = BytesIO(image_data.getvalue())
     image_bytes.name = "image.jpg"
-
-    # Создаем заказ через API, передавая конкретного пользователя
-    order = await order_api.post_multipart(
-        json={
-            "full_name": full_name,
-            "pickup_point_id": pickup_point_id,
-            "marketplace_id": marketplace_id,
-            "customer_id": user["app_user"],
-            "amount": amount,
-            "comment": comment,
-        },
-        files={"barcode_image": image_bytes},
-    )
-
-    if not order:
-        await bot.send_message(
-            chat_id, "Произошла ошибка при создании заказа. Попробуйте еще раз."
+    try:
+        order = await order_api.post_multipart(
+            json={
+                "full_name": full_name,
+                "pickup_point_id": pickup_point_id,
+                "marketplace_id": marketplace_id,
+                "customer_id": user["app_user"],
+                "amount": amount,
+                "comment": comment,
+            },
+            files={"barcode_image": image_bytes},
         )
+    except APIError as e:
+        # Показываем пользователю текст ошибки от API
+        detail = e.detail
+        if isinstance(detail, dict):
+            # Если это словарь ошибок от DRF, склеиваем строки
+            messages = []
+            for k, v in detail.items():
+                if isinstance(v, list):
+                    messages.append(f"{k}: {', '.join(v)}")
+                else:
+                    messages.append(f"{k}: {v}")
+            await bot.send_message(chat_id, "Ошибка при создании заказа:\n" + "\n".join(messages))
+        else:
+            await bot.send_message(chat_id, f"Ошибка при создании заказа: {detail}")
         return None
 
-    # Формируем список маркетплейсов, если нужно
     marketplaces_names = (
         ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", []))
         if pickup_point.get("marketplaces")
         else marketplace["name"]
     )
 
-    # Отправляем пользователю подтверждение
     await bot.send_photo(
         chat_id,
         photo=types.InputFile(image_data),
@@ -183,9 +187,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
             "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>"
         ),
     )
-
     return order
-
 
 @dp.message_handler(state=OrderStates.waiting_for_comment)
 async def handle_comment(message: types.Message, state: FSMContext, user):
@@ -201,6 +203,7 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 @dp.callback_query_handler(cb_order_action.filter(action="skip"), state="*")
 async def skip(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
+    await query.message.answer(user["app_user"])
     user_data = await state.get_data()
     await create_order(query.message.chat.id, user, user_data, comment="")
     await delete_message(

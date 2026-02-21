@@ -5,6 +5,11 @@ from aiohttp import FormData
 
 logger = logging.getLogger("BaseAPI")
 
+class APIError(Exception):
+    def __init__(self, status: int, detail: dict | str | None = None):
+        self.status = status
+        self.detail = detail
+        super().__init__(f"APIError {status}: {detail}")
 
 class BaseAPI:
     BASE_URL = "http://web:8000/api/v1/"
@@ -36,20 +41,22 @@ class BaseAPI:
         }
 
     @staticmethod
-    async def _process_response(response: aiohttp.ClientResponse) -> dict | None:
+    async def _process_response(response: aiohttp.ClientResponse) -> dict | list | None:
         try:
             data = await response.json()
-            response.raise_for_status()
-            if isinstance(data, list):
-                return data[0] if len(data) == 1 else data
-            return data
-        except Exception as e:
-            logger.error(f"API error: {e}")
-            try:
-                logger.error(await response.text())
-            except Exception:
-                pass
-            return None
+        except Exception:
+            data = await response.text()  # на случай не-JSON ответа
+
+        if response.status >= 400:
+            # Логируем для себя
+            logger.error(f"API error: {response.status}, detail={data}")
+            # Бросаем исключение наружу
+            raise APIError(status=response.status, detail=data)
+
+        # Если список с одним элементом — отдаём элемент
+        if isinstance(data, list) and len(data) == 1:
+            return data[0]
+        return data
 
     def _build_url(self, path: str = "", id: int | None = None) -> str:
         if id is not None:
