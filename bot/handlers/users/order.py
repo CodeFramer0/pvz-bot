@@ -131,7 +131,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     file_id = user_data.get("file_id")
     pickup_point_id = user_data.get("pickup_point_id")
     marketplace_id = user_data.get("marketplace_id")
-
+    marketplace_name = user_data.get("marketplace")
 
 
     try:
@@ -176,13 +176,6 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
             await bot.send_message(chat_id, f"Ошибка при создании заказа: {detail}")
         return None
 
-    # Формируем строку маркетплейсов
-    marketplaces_names = (
-        ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", []))
-        if pickup_point.get("marketplaces")
-        else marketplace["name"]
-    )
-
     # Отправляем подтверждение пользователю
     await bot.send_photo(
         chat_id,
@@ -190,7 +183,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
         caption=(
             f"<strong>Ваш заказ №{order['id']} успешно создан! 🎉</strong>\n"
             f"<strong>ФИО:</strong> {order['full_name']}\n"
-            f"<strong>Маркетплейс:</strong> {marketplaces_names}\n"
+            f"<strong>Маркетплейс:</strong> {marketplace_name}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
             f"<strong>Сумма заказа:</strong> {order['amount']}\n"
             f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
