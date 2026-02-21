@@ -8,10 +8,8 @@ import os
 import uuid
 
 def barcode_upload_to(instance, filename):
-    ext = filename.split('.')[-1]  # сохраняем расширение
-    # генерируем уникальное имя файла
+    ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4().hex}.{ext}"
-    # можно положить в папку barcodes/
     return os.path.join("barcodes", filename)
 
 class AppUser(AbstractUser):
