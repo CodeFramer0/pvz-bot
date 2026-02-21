@@ -59,8 +59,8 @@ class TelegramUserAdmin(admin.ModelAdmin):
         "date_join",
         "is_administrator",
     )
-    search_fields = ("id","nick_name", "name", "user_id")
-    list_filter = ("is_administrator","date_join")
+    search_fields = ("id", "nick_name", "name", "user_id")
+    list_filter = ("is_administrator", "date_join")
     ordering = ("-date_join",)
 
     def has_add_permission(self, request, obj=None):
@@ -70,13 +70,20 @@ class TelegramUserAdmin(admin.ModelAdmin):
 @admin.register(PickupPoint)
 class PickupPointAdmin(admin.ModelAdmin):
     form = PickPointForm
+
     list_display = (
         "address",
-        "marketplace",
+        "marketplaces_list",
     )
-    list_filter = ("marketplace",)
+
+    list_filter = ("marketplaces",)
     search_fields = ("address",)
-    ordering = ("marketplace", "address")
+    ordering = ("address",)
+
+    def marketplaces_list(self, obj):
+        return ", ".join(obj.marketplaces.values_list("code", flat=True))
+
+    marketplaces_list.short_description = "Маркетплейсы"
 
 
 class StatusFilter(admin.SimpleListFilter):
@@ -114,6 +121,7 @@ class OrderAdmin(admin.ModelAdmin):
         "cell_id",
         "id",
         "pickup_point",
+        "marketplace",  # ← добавлено
         "full_name",
         "date_created",
         "status",
@@ -122,6 +130,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = (
         StatusFilter,
         "pickup_point",
+        "marketplace",  # ← добавлено
         "date_created",
     )
     search_fields = (
@@ -130,6 +139,7 @@ class OrderAdmin(admin.ModelAdmin):
         "customer__id",
         "customer__nick_name",
         "customer__name",
+        "marketplace__code",  # ← добавлено для поиска
     )
     ordering = ("-date_created",)
     readonly_fields = (
@@ -145,6 +155,7 @@ class OrderAdmin(admin.ModelAdmin):
                 "fields": (
                     "customer",
                     "pickup_point",
+                    "marketplace",  # ← добавлено
                     "full_name",
                     "amount",
                     "comment",
@@ -157,25 +168,3 @@ class OrderAdmin(admin.ModelAdmin):
             },
         ),
     )
-
-    actions = ["mark_as_arrived"]
-
-    @admin.action(
-        description="Отметить выбранные заказы как 'Прибывший' и уведомить клиента"
-    )
-    def mark_as_arrived(self, request, queryset):
-        # Проверяем, что поле status корректное
-        pending_orders = queryset.exclude(status="arrived")
-
-        # Получаем список id, чтобы отправлять уведомления
-        order_ids = pending_orders.values_list("id", flat=True)
-        for order_id in order_ids:
-            logging.info(f"Отправка уведомления заказу {order_id}")
-            send_order_arrived_notification.delay(order_id)
-
-        updated_count = pending_orders.update(status="arrived")
-        self.message_user(
-            request,
-            f"{updated_count} заказ(ов) отмечены как 'Прибывший' и уведомления отправлены.",
-            messages.SUCCESS,
-        )

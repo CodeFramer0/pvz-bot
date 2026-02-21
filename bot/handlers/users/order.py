@@ -9,7 +9,7 @@ from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp, order_api, pickup_point_api, telegram_user_api
+from loader import bot, dp, order_api, pickup_point_api, marketplace_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -41,9 +41,11 @@ async def handle_full_name(message: types.Message, user, state: FSMContext):
     user_data = await state.get_data()
     message_id = user_data.get("message_id")
     await delete_message(chat_id=message.chat.id, message_id=message_id)
+    available_marketplaces = await marketplace_api.get()
+    await message.answer(available_marketplaces)
     message = await message.answer(
         "<strong>Теперь выберите маркетплейс.</strong>",
-        reply_markup=order_keyboards.marketplaces(),
+        reply_markup=order_keyboards.marketplaces(available_marketplaces),
     )
     await OrderStates.waiting_for_marketplace.set()
     await state.update_data(message_id=message.message_id)
@@ -58,6 +60,7 @@ async def choose_marketplace(
 ):
     await query.answer("")
     marketplace = callback_data["marketplace"]
+    marketplace_id = callback_data["marketplace_id"]
     pickup_points = await pickup_point_api.get(params={"marketplace": marketplace})
     await delete_message(
         chat_id=query.message.chat.id, message_id=query.message.message_id
@@ -68,7 +71,7 @@ async def choose_marketplace(
     )
 
     await OrderStates.waiting_for_pickup_point.set()
-    await state.update_data(message_id=message.message_id)
+    await state.update_data(message_id=message.message_id,marketplace=marketplace,marketplace_id=marketplace_id)
 
 
 @dp.callback_query_handler(
@@ -110,67 +113,6 @@ async def handle_amount(message: types.Message, state: FSMContext, user):
     await state.update_data(message_id=message.message_id)
 
 
-@dp.message_handler(state=OrderStates.waiting_for_comment)
-async def handle_comment(message: types.Message, state: FSMContext, user):
-    await message.delete()
-    if message.text == "/start":
-        return await back_to_main_menu(message, user, state)
-    user_data = await state.get_data()
-    full_name = user_data.get("full_name")
-    amount = user_data.get("amount")
-    file_id = user_data.get("file_id")
-    pickup_point_id = user_data.get("pickup_point_id")
-    comment = message.text
-
-    image_data = await bot.download_file_by_id(file_id)
-    image_bytes = BytesIO(image_data.getvalue())
-
-    image_bytes.name = "image.jpg"
-
-    order = await order_api.post_multipart(
-        json={
-            "full_name": full_name,
-            "pickup_point": pickup_point_id,
-            "customer": user["id"],
-            "comment": comment,
-            "amount": amount,
-        },
-        files={"barcode_image": image_bytes},
-    )
-
-    if order:
-        await delete_message(
-            chat_id=message.chat.id, message_id=user_data["message_id"]
-        )
-        pickup_point = await pickup_point_api.get(id=order["pickup_point"])
-        forward_message = await message.answer_photo(
-            photo=types.InputFile(image_data),
-            caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
-            f"<strong>ФИО:</strong> {order['full_name']}\n"
-            f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
-            f"<strong>Адрес:</strong> {pickup_point['address']}\n"
-            f"<strong>Сумма заказа:</strong> {order['amount']}\n"
-            f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
-            f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
-            "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
-        )
-        admin = await telegram_user_api.get(id=pickup_point["admin_telegram_user"])
-        try:
-            await bot.forward_message(
-                chat_id=admin["user_id"],
-                from_chat_id=message.chat.id,
-                message_id=forward_message.message_id,
-            )
-        except MessageToForwardNotFound:
-            pass
-    else:
-        await message.answer(
-            "Произошла ошибка при создании заказа. Попробуйте еще раз.",
-        )
-
-    await state.finish()
-
-
 @dp.callback_query_handler(
     cb_order_action.filter(action="cancel"),
     state="*",
@@ -180,63 +122,80 @@ async def cancel(query: types.CallbackQuery, state: FSMContext, user):
     await back_to_main_menu(query.message, state, user)
 
 
-@dp.callback_query_handler(
-    cb_order_action.filter(action="skip"),
-    state="*",
-)
-async def skip(query: types.CallbackQuery, state: FSMContext, user):
-    await query.answer("")
-    user_data = await state.get_data()
+async def create_order(chat_id: int, user: dict, user_data: dict, comment: str = ""):
+    """Создает заказ через API с конкретным пользователем"""
     full_name = user_data.get("full_name")
+    amount = user_data.get("amount")
     file_id = user_data.get("file_id")
     pickup_point_id = user_data.get("pickup_point_id")
-    amount = user_data.get("amount")
-    comment = ""
+    marketplace_id = user_data.get("marketplace_id")
 
+    # Получаем объекты через API
+    pickup_point = await pickup_point_api.get(id=pickup_point_id)
+    marketplace = await marketplace_api.get(id=marketplace_id)
+
+    # Загружаем файл штрих-кода
     image_data = await bot.download_file_by_id(file_id)
     image_bytes = BytesIO(image_data.getvalue())
-
     image_bytes.name = "image.jpg"
 
+    # Создаем заказ через API, передавая конкретного пользователя
     order = await order_api.post_multipart(
         json={
             "full_name": full_name,
-            "pickup_point": pickup_point_id,
-            "customer": user["id"],
-            "comment": comment,
+            "pickup_point_id": pickup_point_id,
+            "marketplace_id": marketplace_id,
+            "customer_id": user['app_user'],
             "amount": amount,
+            "comment": comment,
         },
         files={"barcode_image": image_bytes},
     )
 
-    if order:
-        await delete_message(
-            chat_id=query.message.chat.id, message_id=user_data["message_id"]
-        )
-        pickup_point = await pickup_point_api.get(id=order["pickup_point"])
-        forward_message = await query.message.answer_photo(
-            photo=types.InputFile(image_data),
-            caption=f"<strong>Ваш заказ №{order['id']} успешно создан!. </strong>🎉\n"
+    if not order:
+        await bot.send_message(chat_id, "Произошла ошибка при создании заказа. Попробуйте еще раз.")
+        return None
+
+    # Формируем список маркетплейсов, если нужно
+    marketplaces_names = ", ".join(mp["name"] for mp in pickup_point.get("marketplaces", [])) \
+        if pickup_point.get("marketplaces") else marketplace["name"]
+
+    # Отправляем пользователю подтверждение
+    await bot.send_photo(
+        chat_id,
+        photo=types.InputFile(image_data),
+        caption=(
+            f"<strong>Ваш заказ №{order['id']} успешно создан! 🎉</strong>\n"
             f"<strong>ФИО:</strong> {order['full_name']}\n"
-            f"<strong>Маркетплейс:</strong> {pickup_point['marketplace']}\n"
+            f"<strong>Маркетплейс:</strong> {marketplaces_names}\n"
             f"<strong>Адрес:</strong> {pickup_point['address']}\n"
             f"<strong>Сумма заказа:</strong> {order['amount']}\n"
             f"<strong>Комментарий к заказу:</strong> {order['comment']}\n\n"
             f"<strong>Ячейка:</strong> №{user['id']} (необходим при получении)\n\n"
-            "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>",
-        )
-        admin = await telegram_user_api.get(id=pickup_point["admin_telegram_user"])
-        try:
-            await bot.forward_message(
-                chat_id=admin["user_id"],
-                from_chat_id=query.from_user.id,
-                message_id=forward_message.message_id,
-            )
-        except MessageToForwardNotFound:
-            pass
-    else:
-        await query.message.answer(
-            "Произошла ошибка при создании заказа. Попробуйте еще раз.",
-        )
+            "Как только статус Вашего заказа изменится, <strong>я пришлю Вам уведомление!</strong>"
+        ),
+    )
 
+    return order
+
+
+@dp.message_handler(state=OrderStates.waiting_for_comment)
+async def handle_comment(message: types.Message, state: FSMContext, user):
+    await message.delete()
+    if message.text == "/start":
+        return await back_to_main_menu(message, user, state)
+    user_data = await state.get_data()
+    await create_order(message.chat.id, user, user_data, comment=message.text)
+    await delete_message(chat_id=message.chat.id, message_id=user_data["message_id"])
+    await state.finish()
+
+
+@dp.callback_query_handler(cb_order_action.filter(action="skip"), state="*")
+async def skip(query: types.CallbackQuery, state: FSMContext, user):
+    await query.answer("")
+    user_data = await state.get_data()
+    await create_order(query.message.chat.id, user,user_data, comment="")
+    await delete_message(
+        chat_id=query.message.chat.id, message_id=user_data["message_id"]
+    )
     await state.finish()

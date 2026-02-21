@@ -29,53 +29,29 @@ def skip():
     return keyboard
 
 
-def marketplaces():
+def marketplaces(available_marketplaces: list):
+    """
+    available_marketplaces — список словарей вида:
+    [{"id": 1, "code": "ozon", "name": "Ozon 🔵"}, ...]
+    """
     keyboard = InlineKeyboardMarkup(row_width=1)
-    keyboard.insert(
-        InlineKeyboardButton(
-            text="Ozon 🔵 ",
-            callback_data=cb_order_marketplace_action.new(
-                action="choose_marketplace", marketplace="ozon"
-            ),
+
+    for mp in available_marketplaces:
+        keyboard.insert(
+            InlineKeyboardButton(
+                text=mp["name"],
+                callback_data=cb_order_marketplace_action.new(
+                    action="choose_marketplace",
+                    marketplace=mp["code"],
+                    marketplace_id=mp["id"],
+                ),
+            )
         )
-    )
-    keyboard.insert(
-        InlineKeyboardButton(
-            text="Wildberries 🟣",
-            callback_data=cb_order_marketplace_action.new(
-                action="choose_marketplace", marketplace="wb"
-            ),
-        )
-    )
-    keyboard.insert(
-        InlineKeyboardButton(
-            text="Yandex Market 🟡",
-            callback_data=cb_order_marketplace_action.new(
-                action="choose_marketplace", marketplace="yandex"
-            ),
-        )
-    )
-    keyboard.insert(
-        InlineKeyboardButton(
-            text="Cdek 🟢",
-            callback_data=cb_order_marketplace_action.new(
-                action="choose_marketplace", marketplace="cdek"
-            ),
-        )
-    )
 
     keyboard.insert(
         InlineKeyboardButton(
-            text="Почта России +150₽ 📪",
-            callback_data=cb_order_marketplace_action.new(
-                action="choose_marketplace", marketplace="mail"
-            ),
-        )
-    )
-
-    keyboard.insert(
-        InlineKeyboardButton(
-            text="Отменить ❌", callback_data=cb_order_action.new(action="cancel")
+            text="Отменить ❌",
+            callback_data=cb_order_action.new(action="cancel")
         )
     )
     return keyboard
@@ -83,29 +59,38 @@ def marketplaces():
 
 def pickup_points(points):
     keyboard = InlineKeyboardMarkup(row_width=1)
+
     if isinstance(points, list):
         for point in points:
+            # берём первый маркетплейс или None
+            marketplace = (
+                point["marketplaces"][0]["code"] if point["marketplaces"] else ""
+            )
             keyboard.insert(
                 InlineKeyboardButton(
                     text=point["address"],
                     callback_data=cb_order_pickup_point_action.new(
                         action="choose_pickup_point",
-                        marketplace=point["marketplace"],
+                        marketplace=marketplace,
                         pickup_point_id=point["id"],
                     ),
                 )
             )
     else:
+        marketplace = (
+            points["marketplaces"][0]["code"] if points["marketplaces"] else ""
+        )
         keyboard.insert(
             InlineKeyboardButton(
                 text=points["address"],
                 callback_data=cb_order_pickup_point_action.new(
                     action="choose_pickup_point",
-                    marketplace=points["marketplace"],
+                    marketplace=marketplace,
                     pickup_point_id=points["id"],
                 ),
             )
         )
+
     keyboard.insert(
         InlineKeyboardButton(
             text="Отменить ❌", callback_data=cb_order_action.new(action="cancel")

@@ -6,11 +6,12 @@ robot/serializers/__init__.py
 
 from .auth import EmailPasswordTokenObtainPairSerializer
 from .orders import (OrderCreateSerializer, OrderDetailSerializer,
-                     OrderListSerializer, )
+                     OrderListSerializer)
 from .pickup_points import (PickupPointDetailSerializer,
                             PickupPointListSerializer, PickupPointSerializer)
 from .telegram_users import TelegramUserSerializer
 from .users import UserSerializer
+from .marketplaces import MarketplaceSerializer
 
 __all__ = [
     # Auth Serializers

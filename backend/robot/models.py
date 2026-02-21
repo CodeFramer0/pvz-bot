@@ -53,7 +53,7 @@ class TelegramUser(models.Model):
         return f"{self.nick_name} - {self.name}"
 
 
-class PickupPoint(models.Model):
+class Marketplace(models.Model):
     MARKETPLACE_CHOICES = [
         ("ozon", "Озон"),
         ("wb", "ВБ"),
@@ -62,16 +62,32 @@ class PickupPoint(models.Model):
         ("mail", "Почта России +150₽"),
     ]
 
+    code = models.CharField(max_length=50, unique=True, choices=MARKETPLACE_CHOICES)
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Маркетплейс"
+        verbose_name_plural = "Маркетплейсы"
+
+    def __str__(self):
+        return self.get_code_display()
+
+
+class PickupPoint(models.Model):
     address = models.CharField(verbose_name="Адрес пункта выдачи", max_length=255)
-    marketplace = models.CharField(
-        verbose_name="Название маркетплейса", max_length=50, choices=MARKETPLACE_CHOICES
+    marketplaces = models.ManyToManyField(
+        Marketplace,
+        related_name="pickup_points",
+        verbose_name="Маркетплейсы в этом ПВЗ",
+        blank=True,
     )
+
     class Meta:
         verbose_name = "Пункт выдачи"
         verbose_name_plural = "Пункты выдачи"
 
     def __str__(self):
-        return f"{self.marketplace} - {self.address}"
+        return self.address
 
 
 class Order(models.Model):
@@ -97,9 +113,16 @@ class Order(models.Model):
     )
     pickup_point = models.ForeignKey(
         PickupPoint,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="orders",
         verbose_name="Пункт выдачи",
+    )
+    marketplace = models.ForeignKey(
+        "Marketplace",
+        on_delete=models.PROTECT,
+        verbose_name="Маркетплейс",
+        null=True,
+        blank=True,
     )
     full_name = models.CharField(verbose_name="ФИО", max_length=100)
     amount = models.CharField(verbose_name="Сумма заказа", max_length=128, default="0")

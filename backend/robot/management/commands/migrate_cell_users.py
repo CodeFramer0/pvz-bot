@@ -1,9 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.contrib.auth import get_user_model
-from robot.models import TelegramUser, Order
 from django.utils.crypto import get_random_string
+from robot.models import Order, TelegramUser
+
 AppUser = get_user_model()
+
 
 class Command(BaseCommand):
     help = "Создать AppUser для всех TelegramUser и перепривязать заказы"
@@ -16,12 +18,12 @@ class Command(BaseCommand):
             for tg in TelegramUser.objects.all():
                 # создаём AppUser с id = TelegramUser.id
                 user, created = AppUser.objects.get_or_create(
-                id=tg.id,
-                defaults={
-                    "username": f"{tg.nick_name or 'user'}_{get_random_string(6)}",
-                    "is_active": True,
-                },
-            )
+                    id=tg.id,
+                    defaults={
+                        "username": f"{tg.nick_name or 'user'}_{get_random_string(6)}",
+                        "is_active": True,
+                    },
+                )
                 if created:
                     created_count += 1
 

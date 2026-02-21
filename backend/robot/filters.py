@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from .models import Order, PickupPoint, TelegramUser
+from .models import Marketplace, Order, PickupPoint, TelegramUser
 
 
 class TelegramUserFilter(filters.FilterSet):
@@ -25,8 +25,13 @@ class OrderFilter(filters.FilterSet):
 
 
 class PickupPointFilter(filters.FilterSet):
-    marketplace = filters.ChoiceFilter(choices=PickupPoint.MARKETPLACE_CHOICES)
-    address = filters.CharFilter(lookup_expr="icontains")
+    marketplace = filters.ModelChoiceFilter(
+        queryset=Marketplace.objects.all(),
+        field_name="marketplaces",
+        to_field_name="code",
+        label="Маркетплейс",
+    )
+    address = filters.CharFilter(field_name="address", lookup_expr="icontains")
 
     class Meta:
         model = PickupPoint

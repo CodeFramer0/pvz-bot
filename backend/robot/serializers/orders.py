@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from ..models import Order, PickupPoint
+from ..models import Order, PickupPoint,Marketplace
 from .pickup_points import PickupPointSerializer
 from .users import UserSerializer
 
@@ -51,20 +51,30 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 class OrderCreateSerializer(serializers.ModelSerializer):
     pickup_point_id = serializers.IntegerField(write_only=True)
+    marketplace_id = serializers.IntegerField(write_only=True)
+    customer_id = serializers.IntegerField(write_only=True, required=False)  # для бота
 
     class Meta:
         model = Order
         fields = (
+            "id",
             "full_name",
             "amount",
             "comment",
             "barcode_image",
             "pickup_point_id",
+            "marketplace_id",
+            "customer_id",
         )
 
     def validate_pickup_point_id(self, value):
         if not PickupPoint.objects.filter(id=value).exists():
             raise serializers.ValidationError("Пункт выдачи не найден")
+        return value
+
+    def validate_marketplace_id(self, value):
+        if not Marketplace.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Маркетплейс не найден")
         return value
 
     def validate_amount(self, value):
@@ -75,15 +85,31 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        request = self.context["request"]
+        customer_id = validated_data.pop("customer_id", None)
+        if customer_id:
+            # если передан ботом — используем AppUser по ID
+            from django.contrib.auth import get_user_model
+            AppUser = get_user_model()
+            customer = AppUser.objects.get(id=customer_id)
+        else:
+            # иначе берем request.user как раньше
+            customer = self.context["request"].user
 
         pickup_point_id = validated_data.pop("pickup_point_id")
         pickup_point = PickupPoint.objects.get(id=pickup_point_id)
 
+        marketplace_id = validated_data.pop("marketplace_id")
+        marketplace = Marketplace.objects.get(id=marketplace_id)
+
+        if not pickup_point.marketplaces.filter(id=marketplace.id).exists():
+            raise serializers.ValidationError(
+                "Выбранный маркетплейс недоступен для этого ПВЗ"
+            )
+
         order = Order.objects.create(
-            customer=request.user,   # берём из JWT
+            customer=customer,
             pickup_point=pickup_point,
+            marketplace=marketplace,
             **validated_data,
         )
-
         return order
