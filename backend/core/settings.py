@@ -12,48 +12,6 @@ env = Env()
 env.read_env()
 
 
-# ==================================================
-# LOGGING
-# ==================================================
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "[{levelname}] {asctime} - {name} - {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-        "simple": {
-            "format": "[{levelname}] {name} - {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "DEBUG",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "robot": {  # Ваше приложение
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
-    },
-}
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==================================================
