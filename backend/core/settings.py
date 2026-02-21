@@ -2,7 +2,7 @@ import logging
 import sys
 from datetime import timedelta
 from pathlib import Path
-
+from aiogram import Bot, types
 from environs import Env
 
 # ==================================================
@@ -28,6 +28,11 @@ ROOT_URLCONF = "core.urls"
 WSGI_APPLICATION = "core.wsgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+BOT = Bot(
+    token=BOT_TOKEN,
+    parse_mode=types.ParseMode.HTML,
+)
 
 # ==================================================
 # APPS DEFINITION
