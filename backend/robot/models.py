@@ -4,7 +4,15 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.html import mark_safe
 from django.utils.translation import gettext_lazy as _
+import os
+import uui
 
+def barcode_upload_to(instance, filename):
+    ext = filename.split('.')[-1]  # сохраняем расширение
+    # генерируем уникальное имя файла
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    # можно положить в папку barcodes/
+    return os.path.join("barcodes", filename)
 
 class AppUser(AbstractUser):
     verification_code = models.CharField(max_length=6, blank=True, null=True)
@@ -130,7 +138,7 @@ class Order(models.Model):
         verbose_name="Комментарий к заказу", blank=True, null=True
     )
     barcode_image = models.ImageField(
-        upload_to="barcodes/",
+        upload_to=barcode_upload_to,
         verbose_name="Изображение штрих-кода",
     )
     date_created = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
