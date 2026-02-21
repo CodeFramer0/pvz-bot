@@ -35,7 +35,7 @@ class JWTClient:
             return False
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                API_BASE_URL + "auth/token/refresh/",
+                API_BASE_URL + "auth/refresh/",
                 json={"refresh": self._refresh},
             ) as resp:
                 if resp.status != 200:
