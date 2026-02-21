@@ -4,13 +4,12 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import (MessageCantBeDeleted,
                                       MessageToForwardNotFound)
-from api.endpoints import OrderAPI, PickupPointAPI, TelegramUserAPI
 from api.base import APIError
 from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp, marketplace_api, order_api, pickup_point_api
+from loader import bot, dp, marketplace_api, order_api, pickup_point_api,telegram_user_api
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -133,19 +132,10 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     pickup_point_id = user_data.get("pickup_point_id")
     marketplace_id = user_data.get("marketplace_id")
 
-    # Проверяем TelegramUser и привязку к AppUser
-    try:
-        telegram_user = await TelegramUserAPI().get(id=user["app_user"])
-    except APIError as e:
-        await bot.send_message(chat_id, f"Ошибка при получении Telegram пользователя: {e.detail}")
-        return None
 
-    if not telegram_user.get("app_user"):
-        await bot.send_message(chat_id, "Ошибка: Ваш Telegram аккаунт не привязан к AppUser.")
-        return None
 
     try:
-        customer_id = int(telegram_user["app_user"])
+        customer_id = int(user["app_user"])
     except (TypeError, ValueError):
         await bot.send_message(chat_id, "Ошибка: неверный ID пользователя.")
         return None
