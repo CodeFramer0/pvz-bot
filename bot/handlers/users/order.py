@@ -215,7 +215,6 @@ async def handle_comment(message: types.Message, state: FSMContext, user):
 @dp.callback_query_handler(cb_order_action.filter(action="skip"), state="*")
 async def skip(query: types.CallbackQuery, state: FSMContext, user):
     await query.answer("")
-    await query.message.answer(user["app_user"])
     user_data = await state.get_data()
     await create_order(query.message.chat.id, user, user_data, comment="")
     await delete_message(
