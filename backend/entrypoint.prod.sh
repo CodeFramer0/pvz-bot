@@ -2,7 +2,10 @@
 set -e
 
 echo "Applying migrations..."
+poetry run python manage.py makemigrations
+poetry run python manage.py makemigrations robot
 poetry run python manage.py migrate --noinput
+poetry run python manage.py migrate robot --noinput
 
 echo "Collecting static files..."
 poetry run python manage.py collectstatic --noinput
