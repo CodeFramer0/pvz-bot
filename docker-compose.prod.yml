@@ -65,7 +65,7 @@ services:
       interval: 15s
       start_period: 30s
     command: sh /backend/entrypoint.prod.sh
-    env_file: .env
+    env_file: .env 
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
@@ -78,7 +78,10 @@ services:
       redis: { condition: service_healthy }
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+
     restart: unless-stopped
     deploy:
       update_config:
@@ -121,7 +124,7 @@ services:
   bot:
     build: ./bot
     restart: always
-    env_file: .env
+    env_file: .env 
     depends_on:
       web: { condition: service_healthy }
 
