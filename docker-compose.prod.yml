@@ -52,6 +52,7 @@ services:
 
   web:
     build: ./backend
+    dockerfile: Dockerfile
     restart: always
     stop_grace_period: 30s 
     deploy:
