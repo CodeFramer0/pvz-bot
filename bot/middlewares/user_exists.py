@@ -1,5 +1,5 @@
 from aiogram.dispatcher.middlewares import BaseMiddleware
-from api import TelegramUserAPI
+from api.endpoints import TelegramUserAPI
 from loader import jwt_client
 
 
@@ -13,32 +13,36 @@ class EnsureUserMiddleware(BaseMiddleware):
         self.api = TelegramUserAPI(jwt_client)
 
     async def _get_or_create_or_update(self, tg_user):
-        user_id = tg_user.id
+        user_id = str(tg_user.id)
         nick_name = tg_user.username or "NoName"
+        full_name = tg_user.full_name or "NoName"
 
-        user = await self.api.get(params={"user_id": user_id})
+        # 1. Получаем ответ от API (это будет список [ {...} ])
+        response = await self.api.get(params={"user_id": user_id})
+
+        # 2. Извлекаем юзера, если список не пуст
+        user = response[0] if isinstance(response, list) and len(response) > 0 else None
 
         if not user:
             # создаём нового
-            new_user = await self.api.post(
+            return await self.api.post(
                 json={
-                    "name": tg_user.full_name,
+                    "name": full_name,
                     "nick_name": nick_name,
                     "user_id": user_id,
                 }
             )
 
-            return new_user
-
+        # 3. Теперь 'user' точно словарь, и эта проверка сработает
         need_update = (
-            user["name"] != tg_user.full_name or user["nick_name"] != nick_name
+            user.get("name") != full_name or user.get("nick_name") != nick_name
         )
+        
         if need_update:
             return await self.api.patch(
                 id=user["id"],
                 json={
-                    "user_id": user_id,
-                    "name": tg_user.full_name,
+                    "name": full_name,
                     "nick_name": nick_name,
                 },
             )

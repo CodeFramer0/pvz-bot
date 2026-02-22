@@ -1,22 +1,17 @@
 # services/jwt_storage.py
 from redis import Redis
 
+# Убедись, что хост 'redis' доступен из контейнера бота
 redis = Redis(host="redis", port=6379, db=5, decode_responses=True)
 
-
-def save_tokens(tg_id, access, refresh=None):
+def save_bot_tokens(access, refresh):
     redis.hset(
-        f"jwt:{tg_id}",
+        "bot_system_auth",
         mapping={
             "access": str(access),
-            "refresh": str(refresh) if refresh is not None else "",
+            "refresh": str(refresh),
         },
     )
 
-
-def get_access_token(tg_id: int) -> str | None:
-    return redis.hget(f"jwt:{tg_id}", "access")
-
-
-def get_refresh_token(tg_id: int) -> str | None:
-    return redis.hget(f"jwt:{tg_id}", "refresh")
+def get_bot_tokens():
+    return redis.hgetall("bot_system_auth") # Вернет словарь {'access': '...', 'refresh': '...'}
