@@ -29,26 +29,26 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
     filterset_class = TelegramUserFilter
     serializer_class = TelegramUserSerializer
 
-def create(self, request, *args, **kwargs):
-    user_id = request.data.get("user_id")
-    if not user_id:
-        return Response({"user_id": "Обязательное поле"}, status=400)
+    def create(self, request, *args, **kwargs):
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"user_id": "Обязательное поле"}, status=400)
 
-    try:
-        with transaction.atomic():
-            obj, created = TelegramUser.objects.update_or_create(
-                user_id=str(user_id),
-                defaults={
-                    "name": request.data.get("name", "NoName"),
-                    "nick_name": request.data.get("nick_name", "NoName"),
-                },
-            )
-    except IntegrityError:
-        obj = TelegramUser.objects.get(user_id=str(user_id))
-        created = False
+        try:
+            with transaction.atomic():
+                obj, created = TelegramUser.objects.update_or_create(
+                    user_id=str(user_id),
+                    defaults={
+                        "name": request.data.get("name", "NoName"),
+                        "nick_name": request.data.get("nick_name", "NoName"),
+                    },
+                )
+        except IntegrityError:
+            obj = TelegramUser.objects.get(user_id=str(user_id))
+            created = False
 
-    serializer = self.get_serializer(obj)
-    return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+        serializer = self.get_serializer(obj)
+        return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="Привязать аккаунт (регистрация через TG)",
