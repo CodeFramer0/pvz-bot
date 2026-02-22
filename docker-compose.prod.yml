@@ -89,12 +89,14 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.middlewares.pvz-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && PathPrefix(`/api`, `/admin`)"
+      
+      # ИСПРАВЛЕНО: Правильный синтаксис для нескольких префиксов
+      - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
+      
       - "traefik.http.routers.pvz-api.entrypoints=websecure"
       - "traefik.http.routers.pvz-api.tls.certresolver=le"
       - "traefik.http.routers.pvz-api.priority=10"
       - "traefik.http.routers.pvz-api.middlewares=pvz-headers"
-      # Указываем порт, который слушает Django ВНУТРИ контейнера
       - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
     
     depends_on:
@@ -148,13 +150,21 @@ services:
       interval: 10s
     labels:
       - "traefik.enable=true"
+
+      # Роутер для API
       - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`) || Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
       - "traefik.http.routers.minio-api.entrypoints=websecure"
       - "traefik.http.routers.minio-api.tls.certresolver=le"
-      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+      - "traefik.http.routers.minio-api.service=minio-api-svc" # Явная привязка
+
+      # Роутер для Консоли
       - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
       - "traefik.http.routers.minio-console.entrypoints=websecure"
       - "traefik.http.routers.minio-console.tls.certresolver=le"
+      - "traefik.http.routers.minio-console.service=minio-console-svc" # Явная привязка
+
+      # Определение сервисов (порты)
+      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
       - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
 
   minio-init:
