@@ -2,11 +2,6 @@
   <div class="pvz-auth-page">
     <div class="pvz-auth-page__container">
 
-      <!-- Blobs -->
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
-
       <div class="pvz-auth-page__card">
 
         <!-- Logo -->
@@ -27,7 +22,7 @@
                 type="text" 
                 outlined dense
                 placeholder="Email или логин"
-                bg-color="grey-1"
+                
                 class="pvz-form-input"
                 :rules="[
                   val => val && val.length > 0 || 'Введите Email или Логин',
@@ -43,7 +38,7 @@
                 :type="showPassword ? 'text' : 'password'"
                 outlined dense
                 placeholder="Введите пароль"
-                bg-color="grey-1"
+                
                 class="pvz-form-input"
                 :rules="[val => val && val.length > 0 || 'Введите пароль']"
               >
@@ -91,7 +86,7 @@
                 v-model="verificationForm.code"
                 outlined dense
                 placeholder="000000"
-                bg-color="grey-1"
+                
                 class="pvz-form-input pvz-form-input--code"
                 maxlength="6"
                 :rules="[val => val && val.length === 6 || 'Введите 6-значный код']"
@@ -143,7 +138,6 @@
                 v-model="resetPasswordForm.email"
                 type="email" outlined dense
                 placeholder="your@email.com"
-                bg-color="grey-1"
                 class="pvz-form-input"
                 :rules="[
                   val => val && val.length > 0 || 'Введите email',
@@ -171,19 +165,19 @@
 
             <div class="pvz-form-group">
               <label class="pvz-form-label">Код из письма</label>
-              <q-input v-model="resetPasswordForm.code" outlined dense placeholder="000000" bg-color="grey-1" class="pvz-form-input" maxlength="6" :rules="[val => val && val.length > 0 || 'Введите код']">
+              <q-input v-model="resetPasswordForm.code" outlined dense placeholder="000000"  class="pvz-form-input" maxlength="6" :rules="[val => val && val.length > 0 || 'Введите код']">
                 <template v-slot:prepend><q-icon name="vpn_key" color="primary" /></template>
               </q-input>
             </div>
             <div class="pvz-form-group">
               <label class="pvz-form-label">Новый пароль</label>
-              <q-input v-model="resetPasswordForm.password" type="password" outlined dense placeholder="Минимум 8 символов" bg-color="grey-1" class="pvz-form-input" :rules="[val => val && val.length > 0 || 'Введите пароль', val => val.length >= 8 || 'Минимум 8 символов']">
+              <q-input v-model="resetPasswordForm.password" type="password" outlined dense placeholder="Минимум 8 символов"  class="pvz-form-input" :rules="[val => val && val.length > 0 || 'Введите пароль', val => val.length >= 8 || 'Минимум 8 символов']">
                 <template v-slot:prepend><q-icon name="lock" color="primary" /></template>
               </q-input>
             </div>
             <div class="pvz-form-group">
               <label class="pvz-form-label">Подтвердите пароль</label>
-              <q-input v-model="resetPasswordForm.passwordConfirm" type="password" outlined dense placeholder="Повторите пароль" bg-color="grey-1" class="pvz-form-input" :rules="[val => val && val.length > 0 || 'Подтвердите пароль', val => val === resetPasswordForm.password || 'Пароли не совпадают']">
+              <q-input v-model="resetPasswordForm.passwordConfirm" type="password" outlined dense placeholder="Повторите пароль"  class="pvz-form-input" :rules="[val => val && val.length > 0 || 'Подтвердите пароль', val => val === resetPasswordForm.password || 'Пароли не совпадают']">
                 <template v-slot:prepend><q-icon name="lock_outline" color="primary" /></template>
               </q-input>
             </div>
@@ -310,7 +304,6 @@ const backToStep1 = () => { resetStep.value = 1 }
 
 
 <style lang="scss" scoped>
-// Только уникальное для страницы логина
 
 // Забыли пароль — выравнивание вправо
 .forgot-link {
@@ -330,8 +323,8 @@ const backToStep1 = () => { resetStep.value = 1 }
   margin-bottom: 24px;
 
   .verify-icon  { font-size: 64px; margin-bottom: 16px; }
-  .verify-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #2c3e50; }
-  .verify-text  { margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6; }
+  .verify-title { margin: 0 0 8px; font-size: 20px; font-weight: 700;}
+  .verify-text  { margin: 0; font-size: 14px; line-height: 1.6; }
 }
 
 // Telegram-блок
@@ -341,7 +334,7 @@ const backToStep1 = () => { resetStep.value = 1 }
   margin-bottom: 24px;
   .tg-icon  { font-size: 80px; margin-bottom: 16px; }
   .tg-title { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #2c3e50; }
-  .tg-text  { margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6; }
+  .tg-text  { margin: 0; font-size: 14px; line-height: 1.6; }
 }
 
 .tg-note {
@@ -350,8 +343,7 @@ const backToStep1 = () => { resetStep.value = 1 }
   justify-content: center;
   gap: 6px;
   font-size: 12px;
-  color: #6b7280;
-  background: #f9fafb;
+    background: #f9fafb;
   padding: 12px;
   border-radius: 12px;
 }
@@ -376,13 +368,55 @@ const backToStep1 = () => { resetStep.value = 1 }
 .reset-desc {
   margin: 0 0 24px;
   font-size: 14px;
-  color: #6b7280;
   line-height: 1.6;
 }
 
 .reset-sent {
   text-align: center;
   margin-bottom: 24px;
-  p { margin: 12px 0 0; font-size: 14px; color: #6b7280; line-height: 1.6; }
+  p { margin: 12px 0 0; font-size: 14px; line-height: 1.6; }
 }
+
+
+.pvz-auth-page {
+  background: var(--q-dark-page, #121212);
+  min-height: 100vh;
+}
+
+.pvz-auth-page__card {
+  background: var(--q-dark, #1d1d1d);
+  color: var(--q-dark-text, #fff);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.pvz-logo-section__title {
+  color: var(--q-dark-text, #fff);
+}
+
+.pvz-logo-section__subtitle {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.pvz-form-label {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.reset-dialog {
+  background: var(--q-dark, #1d1d1d);
+  color: var(--q-dark-text, #fff);
+}
+
+.reset-desc,
+.reset-sent p {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.verify-text {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+
+
+
 </style>

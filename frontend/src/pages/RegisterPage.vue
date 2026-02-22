@@ -401,4 +401,42 @@ const goToLogin = () => router.push('/login')
     color: #6b7280;
   }
 }
+
+.pvz-auth-page {
+  background: var(--q-dark-page, #121212);
+  min-height: 100vh;
+}
+
+.pvz-auth-page__card {
+  background: var(--q-dark, #1d1d1d);
+  color: var(--q-dark-text, #fff);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.pvz-logo-section__title {
+  color: var(--q-dark-text, #fff);
+}
+
+.pvz-logo-section__subtitle {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.pvz-form-label {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.reset-dialog {
+  background: var(--q-dark, #1d1d1d);
+  color: var(--q-dark-text, #fff);
+}
+
+.reset-desc,
+.reset-sent p {
+  color: var(--q-dark-secondary, #aaa);
+}
+
+.verify-text {
+  color: var(--q-dark-secondary, #aaa);
+}
 </style>
