@@ -8,6 +8,9 @@ from rest_framework.response import Response
 from ..filters import TelegramUserFilter
 from ..models import AppUser, TelegramUser
 from ..serializers.telegram_users import TelegramUserSerializer
+from django.db import transaction, IntegrityError
+from rest_framework import status
+from rest_framework.response import Response
 
 @extend_schema_view(
     list=extend_schema(summary="Список пользователей Telegram", tags=["Telegram Users"]),
@@ -25,6 +28,27 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     filterset_class = TelegramUserFilter
     serializer_class = TelegramUserSerializer
+
+def create(self, request, *args, **kwargs):
+    user_id = request.data.get("user_id")
+    if not user_id:
+        return Response({"user_id": "Обязательное поле"}, status=400)
+
+    try:
+        with transaction.atomic():
+            obj, created = TelegramUser.objects.update_or_create(
+                user_id=str(user_id),
+                defaults={
+                    "name": request.data.get("name", "NoName"),
+                    "nick_name": request.data.get("nick_name", "NoName"),
+                },
+            )
+    except IntegrityError:
+        obj = TelegramUser.objects.get(user_id=str(user_id))
+        created = False
+
+    serializer = self.get_serializer(obj)
+    return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="Привязать аккаунт (регистрация через TG)",
