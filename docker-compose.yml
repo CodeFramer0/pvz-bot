@@ -1,0 +1,105 @@
+networks:
+  pvz_net:
+    external: true
+
+volumes:
+  traefik_data:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+services:
+  traefik:
+    image: traefik:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+    networks:
+      - pvz_net
+
+  db:
+    image: postgres:16.2
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - pvz_net
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    networks:
+      - pvz_net
+
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${REGISTRY_URL:-pvz}/backend:${IMAGE_TAG:-latest}
+    env_file: .env
+    networks:
+      - pvz_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    image: ${REGISTRY_URL:-pvz}/frontend:${IMAGE_TAG:-latest}
+    networks:
+      - pvz_net
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    image: ${REGISTRY_URL:-pvz}/bot:${IMAGE_TAG:-latest}
+    env_file: .env
+    networks:
+      - pvz_net
+
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${REGISTRY_URL:-pvz}/backend:${IMAGE_TAG:-latest}
+    command: celery -A core worker -l info
+    env_file: .env
+    networks:
+      - pvz_net
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${REGISTRY_URL:-pvz}/backend:${IMAGE_TAG:-latest}
+    command: celery -A core beat -l info
+    env_file: .env
+    networks:
+      - pvz_net
+
+  minio:
+    image: minio/minio:latest
+    env_file: .env
+    volumes:
+      - minio_data:/data
+    networks:
+      - pvz_net
+    command: server /data --console-address ":9001"
+
+  minio_init:
+    image: minio/mc:latest
+    entrypoint: ["/bin/sh", "-c", "/minio_init.sh"]
+    env_file: .env
+    environment:
+      MC_URL: http://minio:9000
+    volumes:
+      - ./minio_init.sh:/minio_init.sh
+    networks:
+      - pvz_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10

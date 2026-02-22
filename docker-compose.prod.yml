@@ -1,130 +1,97 @@
-volumes:
-  traefik_data:
-  postgres_data:
-    external: true
-    name: pvzbot_postgres_data
-  redis_data:
-  minio_data:
-    external: true
-    name: pvzbot_minio_data
-
 services:
   traefik:
-    image: traefik:latest
     command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedByDefault=false"
+      - "--providers.swarm.network=pvz_net"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      - "--certificatesresolvers.le.acme.httpchallenge=true"
-      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.le.acme.tlschallenge=true"
       - "--certificatesresolvers.le.acme.email=admin@sdsprinter.ru"
       - "--certificatesresolvers.le.acme.storage=/data/acme.json"
-      - "--accesslog=true"
+      - "--log.level=INFO"
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme.json:/data/acme.json
     deploy:
       placement:
-        constraints:
-          - node.role == manager
-
-  db:
-    image: postgres:16.2
-    env_file: .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
-      interval: 10s
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+        constraints: [node.role == manager]
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.services.traefik-svc.loadbalancer.server.port=8080"
 
   web:
-    image: pvz/web:latest
-    stop_grace_period: 30s
+    command: sh /backend/entrypoint.prod.sh
     deploy:
       replicas: 2
       update_config:
-        order: start-first
         parallelism: 1
-        delay: 5s
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
-      interval: 15s
-      start_period: 60s
-    command: sh /backend/entrypoint.prod.sh
-    env_file: .env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
-      - "traefik.http.routers.pvz-api.entrypoints=websecure"
-      - "traefik.http.routers.pvz-api.tls.certresolver=le"
-      - "traefik.http.routers.pvz-api.priority=10"
-      - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
-      - "traefik.http.services.pvz-web-svc.loadbalancer.healthcheck.path=/api/v1/schema/"
-      - "traefik.http.services.pvz-web-svc.loadbalancer.healthcheck.interval=10s"
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
+        - "traefik.http.routers.pvz-api.entrypoints=websecure"
+        - "traefik.http.routers.pvz-api.tls.certresolver=le"
+        - "traefik.http.routers.pvz-api.priority=10"
+        - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
+        - "traefik.http.routers.pvz-api.service=pvz-web-svc"
 
   frontend:
-    image: pvz/frontend:latest
     deploy:
+      replicas: 1
       update_config:
         order: start-first
-        parallelism: 1
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 10s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pvz-spa.rule=Host(`sdsprinter.ru`)"
-      - "traefik.http.routers.pvz-spa.entrypoints=websecure"
-      - "traefik.http.routers.pvz-spa.tls.certresolver=le"
-      - "traefik.http.routers.pvz-spa.priority=1"
-      - "traefik.http.services.pvz-frontend-svc.loadbalancer.server.port=80"
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pvz-spa.rule=Host(`sdsprinter.ru`)"
+        - "traefik.http.routers.pvz-spa.entrypoints=websecure"
+        - "traefik.http.routers.pvz-spa.tls.certresolver=le"
+        - "traefik.http.routers.pvz-spa.priority=1"
+        - "traefik.http.services.pvz-spa-svc.loadbalancer.server.port=80"
+        - "traefik.http.routers.pvz-spa.service=pvz-spa-svc"
 
   minio:
-    image: minio/minio:latest
-    env_file: .env
     environment:
       MINIO_DOMAIN: "s3.sdsprinter.ru"
       MINIO_BROWSER_REDIRECT_URL: "https://console.s3.sdsprinter.ru"
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`) || Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
-      - "traefik.http.routers.minio-api.entrypoints=websecure"
-      - "traefik.http.routers.minio-api.tls.certresolver=le"
-      - "traefik.http.routers.minio-api.service=minio-api-svc"
-      - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
-      - "traefik.http.routers.minio-console.entrypoints=websecure"
-      - "traefik.http.routers.minio-console.tls.certresolver=le"
-      - "traefik.http.routers.minio-console.service=minio-console-svc"
-      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
-      - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`) || Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
+        - "traefik.http.routers.minio-api.entrypoints=websecure"
+        - "traefik.http.routers.minio-api.tls.certresolver=le"
+        - "traefik.http.routers.minio-api.service=minio-api-svc"
+        - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+        - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
+        - "traefik.http.routers.minio-console.entrypoints=websecure"
+        - "traefik.http.routers.minio-console.tls.certresolver=le"
+        - "traefik.http.routers.minio-console.service=minio-console-svc"
+        - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
 
   bot:
-    image: pvz/bot:latest
-    env_file: .env
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 
   celery-worker:
-    image: pvz/backend:latest
-    command: celery -A core worker -l info
-    env_file: .env
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
   celery-beat:
-    image: pvz/backend:latest
-    command: celery -A core beat -l info
-    env_file: .env
+    deploy:
+      replicas: 1  # ⚠️ строго 1, иначе задачи задублируются
+      restart_policy:
+        condition: on-failure
