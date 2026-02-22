@@ -127,8 +127,6 @@ services:
       dockerfile: Dockerfile
     restart: always
     command: celery -A core worker -l info --concurrency=1
-    volumes:
-      - ./backend:/backend
     env_file:
       - .env
     depends_on:
@@ -145,8 +143,6 @@ services:
       dockerfile: Dockerfile
     restart: always
     command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --max-interval=30
-    volumes:
-      - ./backend:/backend
     env_file:
       - .env
     depends_on:
