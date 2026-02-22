@@ -9,8 +9,8 @@ volumes:
 services:
   # ---------------- Traefik ----------------
   traefik:
+    container_name: traefik
     image: traefik:latest
-    container_name: pvz-traefik
     restart: always
     command:
       - "--providers.docker=true"
@@ -47,7 +47,6 @@ services:
 
   # ---------------- Redis ----------------
   redis:
-    container_name: pvz-redis
     image: redis:7-alpine
     restart: always
     volumes:
@@ -105,7 +104,7 @@ services:
 
   # ---------------- Bot ----------------
   bot:
-    container_name: pvz-bot
+    container_name: bot
     build: ./bot
     restart: always
     env_file: .env
@@ -136,7 +135,6 @@ services:
   # ---------------- MinIO ----------------
   minio:
     image: minio/minio:latest
-    container_name: pvz-minio
     restart: always
     env_file: .env
     environment:
@@ -177,13 +175,14 @@ services:
     entrypoint: ["/bin/sh", "/minio_init.sh"]
 
   # ---------------- Frontend ----------------
-  pvz-frontend:
+  frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
     stop_grace_period: 20s
     deploy:
+      replicas: 1 # Для фронта 1 хватит, но старт будет бесшовным из-за order: start-first
       update_config:
         order: start-first
     healthcheck:
