@@ -1,35 +1,54 @@
 """
 robot/serializers/__init__.py
-
-Импортирует все сериализаторы из отдельных модулей
+Точка сборки всех сериализаторов приложения
 """
 
-from .auth import EmailPasswordTokenObtainPairSerializer
+from .auth import (
+    EmailPasswordTokenObtainPairSerializer,
+    ChangePasswordSerializer,
+    EmailSerializer,
+    VerifyCodeSerializer,
+    ResetPasswordSerializer,
+    VerifyTokenSerializer,
+    LogoutSerializer,
+)
 from .marketplaces import MarketplaceSerializer
-from .orders import (OrderCreateSerializer, OrderDetailSerializer,
-                     OrderListSerializer)
-from .pickup_points import (PickupPointDetailSerializer,
-                            PickupPointListSerializer, PickupPointSerializer)
+from .news_letters import NewsletterSerializer
+from .orders import (
+    OrderCreateSerializer,
+    OrderDetailSerializer,
+    OrderListSerializer,
+)
+from .pickup_points import (
+    PickupPointSerializer
+)
 from .telegram_users import TelegramUserSerializer
 from .users import UserSerializer
 
 __all__ = [
-    # Auth Serializers
+    # Auth (Сессии, пароли, коды)
     "EmailPasswordTokenObtainPairSerializer",
-    "UsernamePasswordTokenObtainPairSerializer",
+    "ChangePasswordSerializer",
+    "EmailSerializer",
+    "VerifyCodeSerializer",
+    "ResetPasswordSerializer",
+    "VerifyTokenSerializer",
+    
+    # Users & TG
     "UserSerializer",
-    "UserCreateSerializer",
-    "UserDetailSerializer",
-    # Order Serializers
+    "TelegramUserSerializer",
+    
+    # Orders
     "OrderListSerializer",
     "OrderDetailSerializer",
     "OrderCreateSerializer",
-    # PickupPoint Serializers
+    
+    # ПВЗ & Маркетплейсы
     "PickupPointSerializer",
     "PickupPointListSerializer",
     "PickupPointDetailSerializer",
-    # TelegramUser Serializers
-    "TelegramUserSerializer",
-    "TelegramUserListSerializer",
-    "TelegramUserDetailSerializer",
+    "MarketplaceSerializer",
+    
+    # Инструменты
+    "NewsletterSerializer",
 ]

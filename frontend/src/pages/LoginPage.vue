@@ -16,35 +16,23 @@
           <p class="pvz-logo-section__subtitle">Умное управление заказами</p>
         </div>
 
-        <!-- Auth Tabs -->
-        <div class="pvz-auth-tabs">
-          <div :class="['auth-tab', { active: tab === 'email' }]" @click="tab = 'email'">
-            <q-icon name="mail" size="20px" />
-            <span>Email</span>
-          </div>
-          <div :class="['auth-tab', { active: tab === 'telegram' }]" @click="tab = 'telegram'">
-            <q-icon name="send" size="20px" />
-            <span>Telegram</span>
-          </div>
-        </div>
 
         <!-- Email Login -->
         <div v-if="tab === 'email' && !showVerification" class="auth-body">
           <q-form @submit.prevent="onLoginEmail">
             <div class="pvz-form-group">
-              <label class="pvz-form-label">Email адрес</label>
+              <label class="pvz-form-label">Email адрес / Логин</label>
               <q-input
                 v-model="emailForm.email"
-                type="email" outlined dense
-                placeholder="your@email.com"
+                type="text" 
+                outlined dense
+                placeholder="Email или логин"
                 bg-color="grey-1"
                 class="pvz-form-input"
                 :rules="[
-                  val => val && val.length > 0 || 'Введите email',
-                  val => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || 'Некорректный email'
-                ]"
-              >
-                <template v-slot:prepend><q-icon name="mail" color="primary" /></template>
+                  val => val && val.length > 0 || 'Введите Email или Логин',
+                ]">
+                <template v-slot:prepend><q-icon name="person" color="primary" /></template>
               </q-input>
             </div>
 
@@ -121,29 +109,6 @@
               :loading="loading"
             />
           </q-form>
-        </div>
-
-        <!-- Telegram Login -->
-        <div v-if="tab === 'telegram'" class="auth-body tg-auth">
-          <div class="tg-hero">
-            <div class="tg-icon">✈️</div>
-            <h5 class="tg-title">Быстрый вход</h5>
-            <p class="tg-text">Войдите через Telegram бот для мгновенного доступа к вашим заказам</p>
-          </div>
-
-          <q-btn
-            label="Открыть бот"
-            color="info" unelevated rounded
-            class="pvz-btn-primary q-mb-md"
-            size="lg"
-            icon="open_in_new"
-            @click="onLoginTelegram"
-          />
-
-          <div class="tg-note">
-            <q-icon name="info" size="16px" color="grey-6" />
-            <span>Бот автоматически создаст аккаунт</span>
-          </div>
         </div>
 
         <!-- Footer -->
@@ -241,11 +206,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth-store'
 import { Notify } from 'quasar'
-import apiClient from 'src/api/client'
+// ВНИМАНИЕ: Проверь путь к файлу. Ранее мы создавали ApiClient.js
+import api from 'src/api/client' 
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+// State
 const tab = ref('email')
 const loading = ref(false)
 const showPassword = ref(false)
@@ -260,113 +227,87 @@ const resetPasswordForm = ref({ email: '', code: '', password: '', passwordConfi
 
 const notify = (color, message, icon) => Notify.create({ color, message, position: 'top', icon })
 
+// === LOGIN ===
 const onLoginEmail = async () => {
   loading.value = true
   try {
+    // В authStore.login передавай логику вызова api.post('/auth/login/', { username, password })
     const response = await authStore.login(emailForm.value.email, emailForm.value.password)
+    
+    // Если твой Store возвращает кастомный объект статуса:
     if (response.status === 'success') {
       notify('positive', 'Добро пожаловать! 🎉', 'check_circle')
       router.push('/')
     } else if (response.status === 'verification_needed') {
       showVerification.value = true
       userForVerification.value = { id: response.user_id, email: response.email }
-      Notify.create({ color: 'info', message: response.message, position: 'top' })
-    } else {
-      notify('negative', response.error || 'Ошибка входа', 'error')
+      notify('info', response.message, 'info')
     }
+  } catch (err) {
+    // ApiClient прокидывает ошибку в err.data
+    const errorMsg = err.data?.detail || err.data?.non_field_errors?.[0] || 'Ошибка входа'
+    notify('negative', errorMsg, 'error')
   } finally {
     loading.value = false
   }
 }
 
-const onVerifyEmail = async () => {
-  if (!userForVerification.value) return
-  loading.value = true
-  try {
-    const success = await authStore.verifyEmail(userForVerification.value.id, verificationForm.value.code)
-    if (success) {
-      notify('positive', 'Email подтверждён! 🎉', 'check_circle')
-      router.push('/')
-    } else {
-      notify('negative', 'Неверный код', 'error')
-    }
-  } catch {
-    notify('negative', 'Ошибка подтверждения', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-const onLoginTelegram = () => Notify.create({ color: 'info', message: 'Откройте Telegram бота для входа', position: 'top' })
-const goToRegister = () => router.push('/register')
-
-const emptyResetForm = () => ({ email: '', code: '', password: '', passwordConfirm: '' })
-
-const openResetPassword = () => {
-  showResetPassword.value = true
-  resetStep.value = 1
-  resetPasswordForm.value = emptyResetForm()
-}
-
-const closeResetPassword = () => {
-  showResetPassword.value = false
-  resetStep.value = 1
-  resetPasswordForm.value = emptyResetForm()
-}
-
+// === SEND RESET CODE ===
 const sendPasswordResetCode = async () => {
   if (!resetPasswordForm.value.email) { notify('negative', 'Введите email', 'error'); return }
   loading.value = true
   try {
-    const res = await apiClient.post('/auth/forgot-password/', { email: resetPasswordForm.value.email })
-    if (res.ok) {
-      notify('positive', 'Код отправлен на почту! 📧', 'check_circle')
-      resetStep.value = 2
-    } else {
-      const data = await res.json()
-      notify('negative', data.detail || 'Ошибка при отправке кода', 'error')
-    }
-  } catch {
-    notify('negative', 'Ошибка подключения', 'error')
+    // Используем ПРАВИЛЬНЫЙ эндпоинт из нашего бэкенда
+    await api.post('/auth/password-reset/send-code/', { 
+      email: resetPasswordForm.value.email 
+    })
+    notify('positive', 'Код отправлен на почту! 📧', 'check_circle')
+    resetStep.value = 2
+  } catch (err) {
+    notify('negative', err.data?.detail || 'Ошибка при отправке кода', 'error')
   } finally {
     loading.value = false
   }
 }
 
+// === RESET PASSWORD CONFIRM ===
 const resetPassword = async () => {
   const { code, password, passwordConfirm, email } = resetPasswordForm.value
+  
   if (!code)                        { notify('negative', 'Введите код', 'error'); return }
-  if (!password)                    { notify('negative', 'Введите пароль', 'error'); return }
   if (password !== passwordConfirm) { notify('negative', 'Пароли не совпадают', 'error'); return }
-  if (password.length < 8)         { notify('negative', 'Пароль должен быть не менее 8 символов', 'error'); return }
+  if (password.length < 8)          { notify('negative', 'Пароль слишком короткий', 'error'); return }
 
   loading.value = true
   try {
-    const res = await apiClient.post('/auth/reset-password/', {
-      email, code, new_password: password, new_password_confirm: passwordConfirm
+    // Используем ПРАВИЛЬНЫЙ эндпоинт из нашего бэкенда
+    await api.post('/auth/password-reset/confirm/', {
+      email,
+      code, // Это temp_token
+      new_password: password,
+      new_password_confirm: passwordConfirm
     })
-    const data = await res.json()
-    if (res.ok) {
-      notify('positive', 'Пароль успешно изменён! 🎉', 'check_circle')
-      closeResetPassword()
-      await authStore.login(email, password)
-    } else {
-      notify('negative', data.detail || 'Ошибка при сбросе пароля', 'error')
-    }
-  } catch {
-    notify('negative', 'Ошибка подключения', 'error')
+    
+    notify('positive', 'Пароль успешно изменён! 🎉', 'check_circle')
+    closeResetPassword()
+    
+    // Автоматический вход после смены
+    await authStore.login(email, password)
+    router.push('/')
+  } catch (err) {
+    notify('negative', err.data?.detail || 'Ошибка при сбросе пароля', 'error')
   } finally {
     loading.value = false
   }
 }
 
-const backToStep1 = () => {
-  resetStep.value = 1
-  resetPasswordForm.value.code = ''
-  resetPasswordForm.value.password = ''
-  resetPasswordForm.value.passwordConfirm = ''
-}
+// Helpers
+const goToRegister = () => router.push('/register')
+const openResetPassword = () => { showResetPassword.value = true; resetStep.value = 1 }
+const closeResetPassword = () => { showResetPassword.value = false }
+const backToStep1 = () => { resetStep.value = 1 }
 </script>
+
 
 <style lang="scss" scoped>
 // Только уникальное для страницы логина

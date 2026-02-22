@@ -285,23 +285,32 @@ const close = () => { isEditing.value = false; showMobileEdit.value = false }
 
 const saveChanges = async () => {
   const name = editForm.username.trim()
+  
+  // 1. Локальные проверки
   if (!name) return notify('negative', 'Имя не может быть пустым', 'error')
   if (name === authStore.user?.username) { close(); return }
 
   saving.value = true
   try {
-    const res  = await api.patch('/auth/me/', { username: name })
-    const data = await res.json()
-    if (res.ok) {
-      if (authStore.user) authStore.user.username = data.username
-      editForm.username = data.username
-      notify('positive', 'Профиль обновлён ✓', 'check_circle')
-      close()
-    } else {
-      notify('negative', data?.username?.[0] || data?.detail || 'Ошибка сохранения', 'error')
+    // 2. Отправляем PATCH запрос через наш ApiClient
+    // Он сам вернет объект data или выкинет ошибку в catch
+    const data = await api.patch('/users/me/', { username: name })
+
+    // 3. Обновляем данные в сторе (теперь data — это уже распарсенный JSON)
+    if (authStore.user) {
+      authStore.user.username = data.username
+      // Также обновим в localStorage, чтобы после F5 имя не откатилось
+      localStorage.setItem('user', JSON.stringify(authStore.user))
     }
-  } catch {
-    notify('negative', 'Ошибка подключения', 'error')
+    
+    editForm.username = data.username
+    notify('positive', 'Профиль обновлён ✓', 'check_circle')
+    close()
+    
+  } catch (err) {
+    // 4. ApiClient прокидывает ошибки валидации в err.data
+    const errorMsg = err.data?.username?.[0] || err.data?.detail || 'Ошибка сохранения'
+    notify('negative', errorMsg, 'error')
   } finally {
     saving.value = false
   }

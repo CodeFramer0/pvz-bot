@@ -261,13 +261,16 @@ const closeDetail = () => { selectedOrder.value = null; showDetail.value = false
 
 onMounted(async () => {
   loading.value = true
-  const ok = await auth.getMe()
-  if (!ok) return
   try {
-    const res = await api.get('/orders/my_orders/')
-    orders.value = await res.json()
-  } catch(e) { console.error(e) }
-  finally { loading.value = false }
+    // ApiClient сам парсит JSON, просто забираем данные
+    const data = await api.get('/orders/my-orders/')
+    orders.value = Array.isArray(data) ? data : []
+  } catch(e) { 
+    console.error('Ошибка при загрузке заказов:', e)
+    // Если ошибка 401, ApiClient сам выкинет на логин
+  } finally { 
+    loading.value = false 
+  }
 })
 </script>
 

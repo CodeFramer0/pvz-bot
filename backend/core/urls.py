@@ -17,6 +17,6 @@ urlpatterns = [
     path(
         "api/v1/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"
     ),
-    path("api/v1/", include("robot.routers")),
+    path("api/v1/", include("robot.routers.urls")),
     path("", include("django_prometheus.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

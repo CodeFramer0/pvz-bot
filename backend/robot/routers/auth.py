@@ -1,31 +1,20 @@
-"""
-robot/routers/auth.py
-
-Все auth endpoints в одном месте
-"""
-
 from django.urls import path
+from ..views.auth import (
+    EmailTokenObtainPairView, RefreshTokenView, LogoutView,
+    SendVerificationCodeView, VerifyCodeView, ResetPasswordView, VerifyTokenView
+)
 
-from ..views import (CurrentUserView, EmailTokenObtainPairView,
-                     ForgotPasswordView, LogoutView, RefreshTokenView,
-                     ResetPasswordView, SendVerificationCodeView,
-                     VerifyCodeView, VerifyTokenView)
-
-# Все auth endpoints
 urlpatterns = [
-    path("login/email/", EmailTokenObtainPairView.as_view(), name="email-login"),
-    path("refresh/", RefreshTokenView.as_view(), name="refresh-token"),
+    # JWT сессии
+    path("login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("refresh/", RefreshTokenView.as_view(), name="token_refresh"),
     path("logout/", LogoutView.as_view(), name="logout"),
-    path("me/", CurrentUserView.as_view(), name="current-user"),
-    path("verify/", VerifyTokenView.as_view(), name="verify-token"),
-    path(
-        "verify/send-code/",
-        SendVerificationCodeView.as_view(),
-        name="send-verification-code",
-    ),
-    path("verify/confirm/", VerifyCodeView.as_view(), name="verify-code"),
-    path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
-    path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
+    
+    # Восстановление пароля (Redis Flow)
+    path("password-reset/send-code/", SendVerificationCodeView.as_view(), name="password_reset_send"),
+    path("password-reset/verify-code/", VerifyCodeView.as_view(), name="password_reset_verify"),
+    path("password-reset/confirm/", ResetPasswordView.as_view(), name="password_reset_confirm"),
+    
+    # Утилиты
+    path("verify-token/", VerifyTokenView.as_view(), name="token_verify"),
 ]
-
-__all__ = ["urlpatterns"]

@@ -18,38 +18,30 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const authStore = useAuthStore()
+    const url = `${API_BASE_URL}${endpoint}`
 
-    const headers = {
-      ...options.headers
-    }
-
-    // Добавляем токен, если есть
+    const headers = { ...options.headers }
     if (authStore.accessToken) {
       headers['Authorization'] = `Bearer ${authStore.accessToken}`
     }
 
     try {
-      let response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers
-      })
+      let response = await fetch(url, { ...options, headers })
 
       // Обработка 401 + refresh
-      if (response.status === 401 && authStore.refreshToken) {
+      if (response.status === 401 && authStore.refreshToken && !endpoint.includes('/auth/') &&  !endpoint.includes('/auth/logout/')) {
         if (!this.isRefreshing) {
           this.isRefreshing = true
           try {
-            await authStore.refreshAccessToken()
+            const newToken = await authStore.refreshAccessToken()
             this.isRefreshing = false
-            this.processQueue(null, authStore.accessToken)
+            this.processQueue(null, newToken)
 
-            headers['Authorization'] = `Bearer ${authStore.accessToken}`
-            response = await fetch(`${API_BASE_URL}${endpoint}`, {
-              ...options,
-              headers
-            })
+            headers['Authorization'] = `Bearer ${newToken}`
+            response = await fetch(url, { ...options, headers })
           } catch (error) {
             this.processQueue(error, null)
+            this.isRefreshing = false
             authStore.logout()
             window.location.href = '/login'
             throw error
@@ -59,62 +51,74 @@ class ApiClient {
             this.failedQueue.push({ resolve, reject })
           }).then(token => {
             headers['Authorization'] = `Bearer ${token}`
-            return fetch(`${API_BASE_URL}${endpoint}`, {
-              ...options,
-              headers
-            })
+            return fetch(url, { ...options, headers })
           })
         }
       }
 
-      if (!response.ok && response.status !== 401) {
-        throw new Error(`HTTP ${response.status}`)
+      if (response.status === 204) return null
+      
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        const error = new Error(data.detail || `HTTP ${response.status}`)
+        error.status = response.status
+        error.data = data 
+        throw error
       }
 
-      return response
+      return data
     } catch (error) {
       console.error('API Error:', error)
       throw error
     }
   }
 
-  async get(endpoint, options = {}) {
-    return this.request(endpoint, { ...options, method: 'GET' })
+  async get(endpoint) {
+    return this.request(endpoint, { method: 'GET' })
   }
 
-  async post(endpoint, data, options = {}) {
+  async post(endpoint, data) {
     return this.request(endpoint, {
-      ...options,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
   }
 
-  async put(endpoint, data, options = {}) {
+  async patch(endpoint, data) {
     return this.request(endpoint, {
-      ...options,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+  }
+
+  async put(endpoint, data) {
+    return this.request(endpoint, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...options.headers },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
   }
 
-  async delete(endpoint, options = {}) {
-    return this.request(endpoint, { ...options, method: 'DELETE' })
+  async delete(endpoint) {
+    return this.request(endpoint, { method: 'DELETE' })
   }
 
-  // ✅ Новый postMultipart
-  async postMultipart(endpoint, formData, options = {}) {
-    const authStore = useAuthStore()
-    const headers = { ...options.headers } // не ставим Content-Type!
-    if (authStore.accessToken) headers['Authorization'] = `Bearer ${authStore.accessToken}`
-
+  // ✅ POST для создания (Multipart/FormData)
+  async postMultipart(endpoint, formData) {
     return this.request(endpoint, {
-      ...options,
       method: 'POST',
-      body: formData,
-      headers
+      body: formData
+    })
+  }
+
+  // ✅ PATCH для частичного обновления файлов (Multipart/FormData)
+  async patchMultipart(endpoint, formData) {
+    return this.request(endpoint, {
+      method: 'PATCH',
+      body: formData
     })
   }
 }

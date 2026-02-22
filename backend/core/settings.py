@@ -244,6 +244,7 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = [
+    'robot.auth_backends.EmailOrUsernameModelBackend',
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -251,20 +252,27 @@ AUTHENTICATION_BACKENDS = [
 # JWT CONFIGURATION
 # ==================================================
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    # короткий access токен, безопасно
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    # длинный refresh токен для PWA/мобильного авто-обновления
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    # ротация refresh, старый становится недействительным
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    # обновлять last_login на успешный логин
     "UPDATE_LAST_LOGIN": True,
+    # подпись
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
+    # заголовок
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
+    # optional: включаем rotation только для API, чтобы фронт обновлял access автоматически
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=30),
 }
-
 # ==================================================
 # AUTH
 # ==================================================
@@ -280,33 +288,38 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API для управления пунктами выдачи",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "COMPONENT_SPLIT_REQUEST": True,
-    # Swagger UI
+    # Разделяет схемы для PATCH/POST (удобно для разных сериализаторов)
+    "COMPONENT_SPLIT_PATCH": True,
+    "COMPONENT_SPLIT_COMMAND": True,
+    
+    # Ссылки на статику (твои переменные)
     "SWAGGER_UI_DIST": "https://unpkg.com/swagger-ui-dist@4",
     "SWAGGER_UI_FAVICON_URL": "https://unpkg.com/swagger-ui-dist@4/favicon-32x32.png",
+    
+    # Авторизация: Настройка для того, чтобы в Swagger появилась кнопка и заголовок
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "oauth2Password": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "tokenUrl": "/api/v1/auth/login/", # Укажи точный путь к логину
+                        "scopes": {},
+                    }
+                },
+                "description": "Введите логин и пароль прямо здесь",
+            }
+        }
+    },
+    "SECURITY": [{"oauth2Password": []}],
+    
     "SWAGGER_UI_SETTINGS": {
-        "persistAuthorization": True,  # ← сохраняет токен между перезагрузками Swagger
+        "persistAuthorization": True,
         "displayOperationId": True,
         "filter": True,
-        "showExtensions": True,
-        "deepLinking": True,
         "defaultModelsExpandDepth": 1,
         "docExpansion": "list",
         "tryItOutEnabled": True,
-    },
-    # ReDoc
-    "REDOC_DIST": "https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js",
-    # SECURITY - добавляет кнопку AUTHORIZE
-    "SECURITY": [{"bearerAuth": []}],
-    "COMPONENTS": {
-        "securitySchemes": {
-            "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT",
-                "description": "JWT Authorization header using Bearer token",
-            }
-        }
     },
 }
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

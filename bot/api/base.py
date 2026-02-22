@@ -5,11 +5,13 @@ from aiohttp import FormData
 
 logger = logging.getLogger("BaseAPI")
 
+
 class APIError(Exception):
     def __init__(self, status: int, detail: dict | str | None = None):
         self.status = status
         self.detail = detail
         super().__init__(f"APIError {status}: {detail}")
+
 
 class BaseAPI:
     BASE_URL = "http://web:8000/api/v1/"

@@ -15,4 +15,6 @@ class PickPointForm(forms.ModelForm):
 class NewsletterForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea(attrs={"rows": 5}), label="Текст")
     image = forms.ImageField(required=False, label="Картинка (опционально)")
-    only_verified = forms.BooleanField(required=False, label="Только подтверждённые email")
+    only_verified = forms.BooleanField(
+        required=False, label="Только подтверждённые email"
+    )

@@ -1,36 +1,36 @@
-"""
-robot/views/__init__.py
-
-Главный файл, который импортирует все views из отдельных модулей
-"""
-
-from .auth import (ChangePasswordView, CurrentUserView,
-                   EmailTokenObtainPairView, ForgotPasswordView, LogoutView,
-                   RefreshTokenView, ResetPasswordView,
-                   SendVerificationCodeView, VerifyCodeView, VerifyTokenView)
+from .auth import (
+    EmailTokenObtainPairView, 
+    RefreshTokenView,
+    LogoutView,
+    ResetPasswordView, 
+    SendVerificationCodeView, 
+    VerifyCodeView,
+    VerifyTokenView
+)
 from .marketplace import MarketPlaceViewSet
+from .news_letter import NewsletterAPIView
 from .orders import OrderViewSet
 from .pickup_points import PickupPointViewSet
 from .telegram_users import TelegramUserViewSet
 from .users import UserViewSet
-from .news_letter import newsletter_view
 
 __all__ = [
-    # Auth Views
-    "EmailPasswordLoginView",
-    "UsernamePasswordLoginView",
+    # Auth & Session (из auth.py)
+    "EmailTokenObtainPairView",
     "RefreshTokenView",
     "LogoutView",
-    "CurrentUserView",
-    "ChangePasswordView",
-    "VerifyTokenView",
-    "VerifyCodeView",
     "SendVerificationCodeView",
-    "ForgotPasswordView",
+    "VerifyCodeView",
     "ResetPasswordView",
-    # ViewSets
+    "VerifyTokenView",
+    
+    # ViewSets (CRUD + Actions)
+    "UserViewSet",          # Теперь включает /me/ и /change-password/
     "OrderViewSet",
+    "MarketPlaceViewSet",
     "PickupPointViewSet",
-    "UserViewSet",
     "TelegramUserViewSet",
+    
+    # APIViews
+    "NewsletterAPIView",
 ]

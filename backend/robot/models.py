@@ -21,9 +21,6 @@ class AppUser(AbstractUser):
     phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email_verified = models.BooleanField(default=False)
 
-    USERNAME_FIELD = "email"  # ← ИЗМЕНИ НА EMAIL
-    REQUIRED_FIELDS = ["username"]  # ← username теперь в required
-
     def __str__(self):
         return f"{self.username} ({self.email})"
 

@@ -92,7 +92,8 @@ export default defineConfig((/* ctx */) => {
       // Добавляем плагины сюда
       plugins: [
         'Notify',
-        'LocalStorage'
+        'LocalStorage',
+        'Dialog',
       ],
     },
 

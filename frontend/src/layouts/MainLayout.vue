@@ -224,7 +224,7 @@ const onLogout = () => {
     cancel: { label: 'Отмена', flat: true, color: 'grey-7' },
     ok:     { label: 'Выйти', color: 'negative', unelevated: true },
     persistent: true,
-  }).onOk(() => {
+  }).onOk(async() => {
     auth.logout()
     router.push('/login')
   })

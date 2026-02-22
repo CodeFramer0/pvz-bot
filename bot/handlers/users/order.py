@@ -9,7 +9,8 @@ from keyboards.inline import order_keyboards
 from keyboards.inline.callback_data import (cb_order_action,
                                             cb_order_marketplace_action,
                                             cb_order_pickup_point_action)
-from loader import bot, dp, marketplace_api, order_api, pickup_point_api,telegram_user_api
+from loader import (bot, dp, marketplace_api, order_api, pickup_point_api,
+                    telegram_user_api)
 from states.order import OrderStates
 from utils.utils import delete_message
 
@@ -133,7 +134,6 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     marketplace_id = user_data.get("marketplace_id")
     marketplace_name = user_data.get("marketplace")
 
-
     try:
         customer_id = int(user["app_user"])
     except (TypeError, ValueError):
@@ -171,7 +171,9 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
                     messages.append(f"{k}: {', '.join(v)}")
                 else:
                     messages.append(f"{k}: {v}")
-            await bot.send_message(chat_id, "Ошибка при создании заказа:\n" + "\n".join(messages))
+            await bot.send_message(
+                chat_id, "Ошибка при создании заказа:\n" + "\n".join(messages)
+            )
         else:
             await bot.send_message(chat_id, f"Ошибка при создании заказа: {detail}")
         return None
@@ -193,6 +195,7 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     )
 
     return order
+
 
 @dp.message_handler(state=OrderStates.waiting_for_comment)
 async def handle_comment(message: types.Message, state: FSMContext, user):

@@ -1,25 +1,46 @@
-from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render, redirect
-from ..forms import NewsletterForm
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, generics
+from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.core.files.storage import default_storage
+
+from ..serializers import NewsletterSerializer
 from ..tasks import send_mass_telegram
 
-@staff_member_required
-def newsletter_view(request):
-    if request.method == "POST":
-        form = NewsletterForm(request.POST, request.FILES)
-        if form.is_valid():
-            text = form.cleaned_data["text"]
-            image = form.cleaned_data.get("image")
-            only_verified = form.cleaned_data.get("only_verified")
+class NewsletterAPIView(generics.GenericAPIView):
+    """
+    Рассылка сообщений пользователям через Telegram.
+    Доступно только администраторам.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = NewsletterSerializer
+    # Важно: без этих парсеров Swagger не покажет кнопку выбора файла
+    parser_classes = (MultiPartParser, FormParser)
 
-            image_path = None
-            if image:
-                from django.core.files.storage import default_storage
-                image_path = default_storage.save(f"newsletter/{image.name}", image)
+    @extend_schema(
+        summary="Запустить массовую рассылку",
+        description="Принимает текст и опциональное изображение. Ставит задачу в Celery.",
+        tags=["Admin Operations"],
+        responses={200: {"detail": "Рассылка запущена"}}
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-            send_mass_telegram.delay(text, image_path, only_verified)
-            return render(request, "newsletter_form.html", {"form": form, "message": "Рассылка запущена"})
-    else:
-        form = NewsletterForm()
+        text = serializer.validated_data["text"]
+        image = serializer.validated_data.get("image")
+        only_verified = serializer.validated_data.get("only_verified", False)
 
-    return render(request, "newsletter_form.html", {"form": form})
+        image_path = None
+        if image:
+            # Сохраняем файл, чтобы передать путь в Celery (сам файл передать в таску нельзя)
+            image_path = default_storage.save(f"newsletter/{image.name}", image)
+
+        # Запуск фоновой задачи
+        send_mass_telegram.delay(text, image_path, only_verified)
+        
+        return Response(
+            {"detail": "Рассылка успешно добавлена в очередь"}, 
+            status=status.HTTP_200_OK
+        )
