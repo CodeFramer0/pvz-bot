@@ -121,7 +121,7 @@ class OrderAdmin(admin.ModelAdmin):
         "cell_id",
         "id",
         "pickup_point",
-        "marketplace",  # ← добавлено
+        "marketplace",
         "full_name",
         "date_created",
         "status",
@@ -130,7 +130,7 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = (
         StatusFilter,
         "pickup_point",
-        "marketplace",  # ← добавлено
+        "marketplace",
         "date_created",
     )
     search_fields = (

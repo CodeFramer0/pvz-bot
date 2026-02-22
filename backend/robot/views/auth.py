@@ -17,7 +17,7 @@ from ..serializers.auth import (
     VerifyTokenSerializer,
     LogoutSerializer
 )
-
+from ..utils import send_verification_email
 AppUser = get_user_model()
 
 @extend_schema(tags=["Auth"], summary="Логин (получение JWT)")
@@ -56,26 +56,37 @@ class LogoutView(APIView):
             )
 
 
-@extend_schema(
-    tags=["Auth: Password Reset"],
-    summary="1. Отправить код на Email",
-    description="Генерирует 6-значный код и сохраняет в Redis на 5 минут."
-)
 class SendVerificationCodeView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = EmailSerializer
 
+    @extend_schema(
+        tags=["Auth: Password Reset"],
+        summary="1. Отправить код на Email",
+        description="Генерирует код, сохраняет в Redis и отправляет письмо."
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
         
+        # 1. Генерируем код (можно через твой utils.generate_numeric_code)
         code = get_random_string(6, allowed_chars="0123456789")
+        
+        # 2. Сохраняем в Redis на 5 минут
         r = get_redis_connection("default")
         r.setex(f"email_verif:{email}", 300, code)
         
-        # Здесь должна быть логика отправки письма: send_mail(...)
-        return Response({"detail": "Код отправлен на указанный email"})
+        # 3. Отправляем реальное письмо через твой utils.py
+        try:
+            send_verification_email(email=email, code=code)
+            return Response({"detail": f"Код успешно отправлен на {email}"})
+        except Exception as e:
+            # Если, например, пароль от почты в .env неверный
+            return Response(
+                {"detail": "Ошибка при отправке письма. Попробуйте позже.", "error": str(e)}, 
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
 
 @extend_schema(

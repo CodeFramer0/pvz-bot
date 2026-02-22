@@ -21,6 +21,13 @@ class AuthAPI(BaseAPI):
             }
         )
 
+    async def send_verification_code(self, email: str) -> dict | None:
+        return await self.post(path="password-reset/send-code/", json={"email": email})
+
+    async def verify_code(self, email: str, code: str) -> dict | None:
+        # На бэкенде мы используем путь подтверждения кода для сброса
+        return await self.post(path="password-reset/verify-code/", json={"email": email, "code": code})
+
 class UsersAPI(BaseAPI):
     def __init__(self, jwt_client):
         super().__init__("users", jwt_client)

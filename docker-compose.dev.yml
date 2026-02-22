@@ -5,7 +5,6 @@ volumes:
   minio_data:
 
 services:
-  # ---------------- Traefik ----------------
   traefik:
     image: traefik:latest
     container_name: pvz-traefik
@@ -16,7 +15,6 @@ services:
       - "--entrypoints.web.address=:80"
       - "--api.dashboard=true"
       - "--api.insecure=true"
-      - "--accesslog=true"
     ports:
       - "80:80"
       - "8080:8080"
@@ -24,7 +22,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_data:/data
 
-  # ---------------- PostgreSQL ----------------
   db:
     container_name: pvz-db
     image: postgres:16.2
@@ -34,11 +31,10 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
 
-  # ---------------- Redis ----------------
   redis:
     container_name: pvz-redis
     image: redis:7-alpine
@@ -47,13 +43,11 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
       retries: 5
 
-  # ---------------- Django Web ----------------
   web:
-    container_name: pvz-django
+    # УБРАНО container_name для возможности масштабирования
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -68,75 +62,43 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      # Проверяем доступность API для бота
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 20s
     labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.pvz-admin.rule=Host(`localhost`) && PathPrefix(`/admin`)"
-        - "traefik.http.routers.pvz-admin.entrypoints=web"
-        - "traefik.http.routers.pvz-admin.priority=10"
-        - "traefik.http.routers.pvz-admin.service=pvz-django-svc"
-        - "traefik.http.routers.pvz-api.rule=Host(`localhost`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.pvz-api.rule=Host(`localhost`) && PathPrefix(`/api`, `/admin`)"
         - "traefik.http.routers.pvz-api.entrypoints=web"
-        - "traefik.http.routers.pvz-api.priority=10"
-        - "traefik.http.routers.pvz-api.service=pvz-django-svc"
-        - "traefik.http.services.pvz-django-svc.loadbalancer.server.port=8000"
+        - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
 
-  # ---------------- Bot ----------------
   bot:
     container_name: pvz-bot
-    build:
-      context: ./bot
+    build: ./bot
     restart: always
     env_file: .env
     command: python runbot.py
     depends_on:
       web:
-        condition: service_healthy # <--- ТЕПЕРЬ ЖДЕТ ПОЛНОГО ЗАПУСКА API
+        condition: service_healthy # Ждет, пока Django реально ответит по сети
       redis:
         condition: service_healthy
-      db:
-        condition: service_healthy
 
-  # ---------------- Celery Worker & Beat ----------------
   celery-worker:
-    container_name: pvz-celery-worker
     build: ./backend
     command: celery -A core worker -l info --concurrency=1
-    volumes:
-      - ./backend:/backend
     env_file: .env
     depends_on:
       redis:
         condition: service_healthy
-      db:
-        condition: service_healthy
 
-  celery-beat:
-    container_name: pvz-celery-beat
-    build: ./backend
-    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - ./backend:/backend
-    env_file: .env
-    depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
-
-  # ---------------- MinIO ----------------
   minio:
     image: minio/minio:latest
     container_name: pvz-minio
     restart: always
     env_file: .env
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_DOMAIN: "s3.localhost"
       MINIO_BROWSER_REDIRECT_URL: "http://console.s3.localhost"
     command: server /data --console-address ":9001"
@@ -145,34 +107,20 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
       interval: 5s
-      timeout: 2s
-      retries: 12
     labels:
-          - "traefik.enable=true"
-          - "traefik.http.routers.minio-api.rule=Host(`s3.localhost`)"
-          - "traefik.http.routers.minio-api.entrypoints=web"
-          - "traefik.http.routers.minio-api.service=minio-api-svc"
-          - "traefik.http.routers.minio-static.rule=Host(`static.s3.localhost`) || Host(`media.s3.localhost`)"
-          - "traefik.http.routers.minio-static.entrypoints=web"
-          - "traefik.http.routers.minio-static.service=minio-api-svc"
-          - "traefik.http.routers.minio-console.rule=Host(`console.s3.localhost`)"
-          - "traefik.http.routers.minio-console.entrypoints=web"
-          - "traefik.http.routers.minio-console.service=minio-console-svc"
-          - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
-          - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
+      - "traefik.enable=true"
+      # Исправлено: разделяем хосты через ||
+      - "traefik.http.routers.minio-api.rule=Host(`s3.localhost`) || Host(`static.s3.localhost`) || Host(`media.s3.localhost`)"
+      - "traefik.http.routers.minio-api.entrypoints=web"
+      - "traefik.http.routers.minio-api.service=minio-api-svc"
+      
+      - "traefik.http.routers.minio-console.rule=Host(`console.s3.localhost`)"
+      - "traefik.http.routers.minio-console.entrypoints=web"
+      - "traefik.http.routers.minio-console.service=minio-console-svc"
 
-  minio-init:
-    image: minio/mc:latest
-    container_name: pvz-minio-init
-    depends_on:
-      minio:
-        condition: service_healthy
-    env_file: .env
-    volumes:
-      - ./minio_init.sh:/minio_init.sh
-    entrypoint: ["/bin/sh", "/minio_init.sh"] 
+      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+      - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
 
-  # ---------------- Frontend ----------------
   pvz-frontend:
     container_name: pvz-frontend
     build:
@@ -182,11 +130,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pvz-spa.rule=Host(`localhost`) && PathPrefix(`/`)"
-      - "traefik.http.routers.pvz-spa.entrypoints=web"
-      - "traefik.http.routers.pvz-spa.priority=1"
-      - "traefik.http.services.pvz-frontend-svc.loadbalancer.server.port=9000"
+      - "traefik.http.routers.pvz-spa.rule=Host(`localhost`)"
+      - "traefik.http.services.pvz-spa-svc.loadbalancer.server.port=9000"
