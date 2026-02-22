@@ -55,8 +55,6 @@ async def verify_code(message: Message, state: FSMContext, user: dict):
         await message.answer("❌ Неверный код. Попробуйте ещё раз:")
         return
 
-    temp_token = result["temporary_token"]
-
     # Привязываем AppUser к TelegramUser
     bind_result = await telegram_user_api.bind_user(tg_record_id=user["id"], email=email)
     if not bind_result:
@@ -84,7 +82,7 @@ async def handle_contact(message: types.Message, user: dict):
     phone_number = message.contact.phone_number
 
     result = await users_api.patch(
-        pk=user["app_user"], json={"phone_number": phone_number}
+        pk=user["app_user_id"], json={"phone_number": phone_number}
     )
 
     if result:
