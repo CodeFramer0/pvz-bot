@@ -28,7 +28,32 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     filterset_class = TelegramUserFilter
     serializer_class = TelegramUserSerializer
-
+    @extend_schema(
+    summary="Upsert Telegram пользователя по user_id",
+    description="Создает TelegramUser, если его нет, либо обновляет name/nick_name по user_id. Идемпотентный эндпоинт.",
+    tags=["Telegram Users"],
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "user_id": {"type": "string", "description": "Telegram user_id"},
+                "name": {"type": "string"},
+                "nick_name": {"type": "string"},
+            },
+            "required": ["user_id"],
+        }
+    },
+    responses={
+        201: {
+            "description": "Создан новый TelegramUser",
+        },
+        200: {
+            "description": "TelegramUser обновлён или уже существовал",
+        },
+        400: {"description": "user_id не передан"},
+        409: {"description": "Конфликт уникальности (редкий race condition)"},
+    },
+)
     def create(self, request, *args, **kwargs):
         user_id = request.data.get("user_id")
         if not user_id:
