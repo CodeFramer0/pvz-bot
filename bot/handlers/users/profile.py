@@ -58,7 +58,7 @@ async def verify_code(message: Message, state: FSMContext, user: dict):
     temp_token = result["temporary_token"]
 
     # Привязываем AppUser к TelegramUser
-    bind_result = await telegram_user_api.bind_user(id=user["id"], email=email)
+    bind_result = await telegram_user_api.bind_user(tg_record_id=user["id"], email=email)
     if not bind_result:
         await message.answer("Ошибка при привязке профиля. Попробуйте позже.")
         return
@@ -84,7 +84,7 @@ async def handle_contact(message: types.Message, user: dict):
     phone_number = message.contact.phone_number
 
     result = await users_api.patch(
-        id=user["app_user"], json={"phone_number": phone_number}
+        pk=user["app_user"], json={"phone_number": phone_number}
     )
 
     if result:
@@ -96,4 +96,3 @@ async def handle_contact(message: types.Message, user: dict):
         await message.answer(
             "Ошибка при привязке номера через API.", reply_markup=ReplyKeyboardRemove()
         )
-    await message.answer(result)

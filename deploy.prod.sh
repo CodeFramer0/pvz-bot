@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 
 echo -e "${CYAN}🚀 Начинаем бесшовный деплой (PROD)...${NC}"
 
-COMPOSE_FILE="docker-compose.dev.yml"
+COMPOSE_FILE="docker-compose.prod.yml"
 SERVICE_NAME="web"
 
 # 1. Собираем свежий образ

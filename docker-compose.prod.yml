@@ -5,6 +5,7 @@ volumes:
   minio_data:
   prometheus_data:
   grafana_data:
+
 services:
   # ---------------- Traefik ----------------
   traefik:
@@ -14,10 +15,8 @@ services:
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-
       - "--certificatesresolvers.le.acme.httpchallenge=true"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
       - "--certificatesresolvers.le.acme.email=admin@sdsprinter.ru"
@@ -31,13 +30,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_data:/data
+
   # ---------------- PostgreSQL ----------------
   db:
     container_name: pvz-db
     image: postgres:16.2
     restart: always
-    env_file:
-      - .env
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     healthcheck:
@@ -61,95 +60,65 @@ services:
 
   # ---------------- Django Web ----------------
   web:
-    container_name: pvz-django
+    # Убираем фиксированное имя для корректного start-first при рестартах
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
+    stop_grace_period: 30s
+    deploy:
+      update_config:
+        order: start-first
     healthcheck:
-      # Проверяем, что эндпоинт схемы или любой другой отвечает 200
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
     command: sh /backend/entrypoint.prod.sh
-    env_file:
-      - .env
+    env_file: .env
     labels:
-        - "traefik.enable=true"
-
-        # middleware
-        - "traefik.http.middlewares.pvz-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-
-        # /api
-        - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && PathPrefix(`/api`)"
-        - "traefik.http.routers.pvz-api.entrypoints=websecure"
-        - "traefik.http.routers.pvz-api.tls.certresolver=le"
-        - "traefik.http.routers.pvz-api.middlewares=pvz-headers"
-        - "traefik.http.routers.pvz-api.service=pvz"
-
-        # /admin
-        - "traefik.http.routers.pvz-admin.rule=Host(`sdsprinter.ru`) && PathPrefix(`/admin`)"
-        - "traefik.http.routers.pvz-admin.entrypoints=websecure"
-        - "traefik.http.routers.pvz-admin.tls.certresolver=le"
-        - "traefik.http.routers.pvz-admin.middlewares=pvz-headers"
-        - "traefik.http.routers.pvz-admin.service=pvz"
-
-        - "traefik.http.services.pvz.loadbalancer.server.port=8000"
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.pvz-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && PathPrefix(`/api`, `/admin`)"
+      - "traefik.http.routers.pvz-api.entrypoints=websecure"
+      - "traefik.http.routers.pvz-api.tls.certresolver=le"
+      - "traefik.http.routers.pvz-api.priority=10"
+      - "traefik.http.routers.pvz-api.middlewares=pvz-headers"
+      - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
   # ---------------- Bot ----------------
   bot:
     container_name: pvz-bot
-    build:
-      context: ./bot
+    build: ./bot
     restart: always
-    env_file:
-      - .env
+    env_file: .env
     command: python runbot.py
     depends_on:
-      web:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      web: { condition: service_healthy }
+      db: { condition: service_healthy }
 
-  # ---------------- Celery Worker ----------------
+  # ---------------- Celery ----------------
   celery-worker:
-    container_name: pvz-celery-worker
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     restart: always
     command: celery -A core worker -l info --concurrency=1
-    env_file:
-      - .env
+    env_file: .env
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
-  # ---------------- Celery Beat ----------------
   celery-beat:
-    container_name: pvz-celery-beat
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
     restart: always
-    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler --max-interval=30
-    env_file:
-      - .env
+    command: celery -A core beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: .env
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
   # ---------------- MinIO ----------------
   minio:
@@ -158,8 +127,6 @@ services:
     restart: always
     env_file: .env
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-password}
       MINIO_DOMAIN: "s3.sdsprinter.ru"
       MINIO_BROWSER_REDIRECT_URL: "https://console.s3.sdsprinter.ru"
     command: server /data --console-address ":9001"
@@ -167,54 +134,40 @@ services:
       - minio_data:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
-      interval: 5s
-      timeout: 2s
-      retries: 12
+      interval: 10s
     labels:
-    - "traefik.enable=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`) || Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
+      - "traefik.http.routers.minio-api.entrypoints=websecure"
+      - "traefik.http.routers.minio-api.tls.certresolver=le"
+      - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+      - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
+      - "traefik.http.routers.minio-console.entrypoints=websecure"
+      - "traefik.http.routers.minio-console.tls.certresolver=le"
+      - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
 
-    - "traefik.http.routers.minio-api.rule=Host(`s3.sdsprinter.ru`)"
-    - "traefik.http.routers.minio-api.entrypoints=websecure"
-    - "traefik.http.routers.minio-api.tls.certresolver=le"
-    - "traefik.http.routers.minio-api.service=minio-api-svc"
-
-    - "traefik.http.routers.minio-static.rule=Host(`static.s3.sdsprinter.ru`) || Host(`media.s3.sdsprinter.ru`)"
-    - "traefik.http.routers.minio-static.entrypoints=websecure"
-    - "traefik.http.routers.minio-static.tls.certresolver=le"
-    - "traefik.http.routers.minio-static.service=minio-api-svc"
-
-    - "traefik.http.routers.minio-console.rule=Host(`console.s3.sdsprinter.ru`)"
-    - "traefik.http.routers.minio-console.entrypoints=websecure"
-    - "traefik.http.routers.minio-console.tls.certresolver=le"
-    - "traefik.http.routers.minio-console.service=minio-console-svc"
-
-    - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
-    - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
-  # ---------------- MinIO Init ----------------
   minio-init:
     image: minio/mc:latest
-    container_name: pvz-minio-init
     depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MC_ALIAS_NAME: myminio
-      MC_URL: ${MINIO_INTERNAL_ENDPOINT}
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BUCKET_STATIC: ${MINIO_BUCKET_STATIC}
-      MINIO_BUCKET_MEDIA: ${MINIO_BUCKET_MEDIA}
-      MINIO_BUCKET_DBBACKUP: ${MINIO_BUCKET_DBBACKUP}
+      minio: { condition: service_healthy }
+    env_file: .env
     volumes:
       - ./minio_init.sh:/minio_init.sh
-    entrypoint: ["/bin/sh", "/minio_init.sh"] 
+    entrypoint: ["/bin/sh", "/minio_init.sh"]
 
+  # ---------------- Frontend ----------------
   pvz-frontend:
-    container_name: pvz-frontend
-    restart: unless-stopped # Добавлено: автозапуск
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    stop_grace_period: 20s
+    deploy:
+      update_config:
+        order: start-first
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 10s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pvz-spa.rule=Host(`sdsprinter.ru`)"

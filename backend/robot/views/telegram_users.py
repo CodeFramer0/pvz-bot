@@ -28,6 +28,7 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
     filterset_class = TelegramUserFilter
     serializer_class = TelegramUserSerializer
+    
     @extend_schema(
     summary="Upsert Telegram пользователя по user_id",
     description="Создает TelegramUser, если его нет, либо обновляет name/nick_name по user_id. Идемпотентный эндпоинт.",
