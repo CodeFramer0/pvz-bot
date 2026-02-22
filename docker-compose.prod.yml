@@ -1,6 +1,5 @@
 volumes:
   traefik_data:
-  # Подключаем твой старый волюм базы
   postgres_data:
     external: true
     name: pvzbot_postgres_data
@@ -11,9 +10,7 @@ volumes:
 
 services:
   traefik:
-    container_name: pvz-traefik
     image: traefik:latest
-    restart: always
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -31,13 +28,14 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Монтируем файл напрямую для SSL
-      - ./acme.json:/data/acme.json 
+      - ./acme.json:/data/acme.json
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
   db:
-    container_name: pvz-db
     image: postgres:16.2
-    restart: always
     env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -47,7 +45,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: always
     volumes:
       - redis_data:/data
     healthcheck:
@@ -55,21 +52,20 @@ services:
       interval: 10s
 
   web:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    restart: always
-    stop_grace_period: 30s 
+    image: pvz/web:latest
+    stop_grace_period: 30s
     deploy:
       replicas: 2
       update_config:
         order: start-first
+        parallelism: 1
+        delay: 5s
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
       interval: 15s
-      start_period: 30s
+      start_period: 60s
     command: sh /backend/entrypoint.prod.sh
-    env_file: .env 
+    env_file: .env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
@@ -77,19 +73,15 @@ services:
       - "traefik.http.routers.pvz-api.tls.certresolver=le"
       - "traefik.http.routers.pvz-api.priority=10"
       - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
-    depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_healthy }
+      - "traefik.http.services.pvz-web-svc.loadbalancer.healthcheck.path=/api/v1/schema/"
+      - "traefik.http.services.pvz-web-svc.loadbalancer.healthcheck.interval=10s"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-
-    restart: unless-stopped
+    image: pvz/frontend:latest
     deploy:
       update_config:
         order: start-first
+        parallelism: 1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 10s
@@ -103,7 +95,6 @@ services:
 
   minio:
     image: minio/minio:latest
-    restart: always
     env_file: .env
     environment:
       MINIO_DOMAIN: "s3.sdsprinter.ru"
@@ -124,28 +115,16 @@ services:
       - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
       - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
 
-  # Остальные сервисы (bot, celery)
   bot:
-    build: ./bot
-    restart: always
-    env_file: .env 
-    depends_on:
-      web: { condition: service_healthy }
+    image: pvz/bot:latest
+    env_file: .env
 
   celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: pvz/backend:latest
     command: celery -A core worker -l info
     env_file: .env
-    depends_on:
-      redis: { condition: service_healthy }
 
   celery-beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: pvz/backend:latest
     command: celery -A core beat -l info
     env_file: .env
-    depends_on:
-      redis: { condition: service_healthy }

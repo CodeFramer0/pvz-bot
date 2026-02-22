@@ -1,13 +1,18 @@
+version: "3.9"
+
 volumes:
   traefik_data:
   postgres_data:
   redis_data:
   minio_data:
 
+networks:
+  pvz_net:
+    driver: overlay
+
 services:
   # ---------------- Traefik ----------------
   traefik:
-    container_name: pvz-traefik
     image: traefik:latest
     restart: always
     command:
@@ -22,10 +27,15 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_data:/data
+    networks:
+      - pvz_net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
   # ---------------- Databases ----------------
   db:
-    container_name: pvz-db
     image: postgres:16.2
     restart: always
     env_file: .env
@@ -34,6 +44,8 @@ services:
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${SQL_USER}"]
       interval: 5s
+    networks:
+      - pvz_net
 
   redis:
     image: redis:7-alpine
@@ -43,48 +55,43 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
+    networks:
+      - pvz_net
 
-  # ---------------- Django Web (Scaling) ----------------
+  # ---------------- Django Web ----------------
   web:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: pvz/web:dev
     restart: always
-    stop_grace_period: 30s
-    deploy:
-      replicas: 2
-      update_config:
-        order: start-first
-        parallelism: 1
     command: sh /backend/entrypoint.dev.sh
-    volumes:
-      - ./backend:/backend
     env_file: .env
+    networks:
+      - pvz_net
     depends_on:
-      db: { condition: service_healthy }
-      redis: { condition: service_healthy }
+      - db
+      - redis
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
       interval: 5s
       start_period: 20s
     labels:
       - "traefik.enable=true"
-      # Исправлено: правильный синтаксис для нескольких путей
       - "traefik.http.routers.pvz-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
       - "traefik.http.routers.pvz-api.entrypoints=web"
       - "traefik.http.routers.pvz-api.priority=10"
       - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
+    deploy:
+      replicas: 2
+      update_config:
+        order: start-first
+        parallelism: 1
 
   # ---------------- Frontend ----------------
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+    image: pvz/frontend:dev
     restart: always
     command: npm run dev
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+    networks:
+      - pvz_net
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.pvz-spa.rule=Host(`localhost`)"
@@ -94,22 +101,28 @@ services:
 
   # ---------------- Bot & Workers ----------------
   bot:
-    build: ./bot
+    image: pvz/bot:dev
     restart: always
     env_file: .env
     command: python runbot.py
+    networks:
+      - pvz_net
     depends_on:
-      web: { condition: service_healthy }
+      - web
+    deploy:
+      replicas: 1   # бот только одна реплика
+      update_config:
+        order: start-first
 
   celery-worker:
-    build: ./backend
+    image: pvz/celery-worker:dev
     restart: always
     command: celery -A core worker -l info --concurrency=1
     env_file: .env
-    volumes:
-      - ./backend:/backend
+    networks:
+      - pvz_net
     depends_on:
-      redis: { condition: service_healthy }
+      - redis
 
   # ---------------- MinIO ----------------
   minio:
@@ -125,6 +138,8 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
       interval: 5s
+    networks:
+      - pvz_net
     labels:
       - "traefik.enable=true"
       # API
