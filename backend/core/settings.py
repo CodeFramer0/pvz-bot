@@ -253,7 +253,7 @@ AUTHENTICATION_BACKENDS = [
 # ==================================================
 SIMPLE_JWT = {
     # короткий access токен, безопасно
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     # длинный refresh токен для PWA/мобильного авто-обновления
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     # ротация refresh, старый становится недействительным
