@@ -60,23 +60,32 @@ services:
 
   # ---------------- Django Web ----------------
   web:
-    # Убираем фиксированное имя для корректного start-first при рестартах
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: always
-    stop_grace_period: 30s
+    # Даем Django время завершить запросы при выключении
+    stop_grace_period: 30s 
+    
+    # Настройки для постоянных 2х копий и бесшовного апдейта
     deploy:
+      replicas: 2
       update_config:
-        order: start-first
+        parallelism: 1          # Обновляем по одному за раз
+        order: start-first      # Сначала запускаем новый, потом гасим старый
+        failure_action: rollback
+        delay: 10s              # Пауза между обновлением первого и второго
+    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/schema/"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 30s # Время на запуск Gunicorn/Миграции
+      
     command: sh /backend/entrypoint.prod.sh
     env_file: .env
+    
     labels:
       - "traefik.enable=true"
       - "traefik.http.middlewares.pvz-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
@@ -85,7 +94,9 @@ services:
       - "traefik.http.routers.pvz-api.tls.certresolver=le"
       - "traefik.http.routers.pvz-api.priority=10"
       - "traefik.http.routers.pvz-api.middlewares=pvz-headers"
+      # Указываем порт, который слушает Django ВНУТРИ контейнера
       - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
+    
     depends_on:
       db: { condition: service_healthy }
       redis: { condition: service_healthy }
