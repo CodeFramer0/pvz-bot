@@ -7,6 +7,7 @@ volumes:
 services:
   # ---------------- Traefik ----------------
   traefik:
+    container_name: traefik
     image: traefik:latest
     restart: always
     command:
@@ -24,6 +25,7 @@ services:
 
   # ---------------- Databases ----------------
   db:
+    container_name: db
     image: postgres:16.2
     restart: always
     env_file: .env
