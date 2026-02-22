@@ -1,0 +1,86 @@
+services:
+  traefik:
+    image: traefik:latest
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedByDefault=false"
+      - "--providers.swarm.network=pvz_net"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.portainer.address=:9001"
+      - "--log.level=DEBUG"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "9001:9001"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik-dash.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+        - "traefik.http.routers.traefik-dash.service=api@internal"
+        - "traefik.http.routers.traefik-dash.entrypoints=web"
+        - "traefik.http.services.traefik-dash-svc.loadbalancer.server.port=8080"
+
+  web:
+    command: sh /backend/entrypoint.dev.sh
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pvz-api.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
+        - "traefik.http.routers.pvz-api.entrypoints=web"
+        - "traefik.http.routers.pvz-api.priority=10"
+        - "traefik.http.services.pvz-web-svc.loadbalancer.server.port=8000"
+        - "traefik.http.routers.pvz-api.service=pvz-web-svc"
+
+  frontend:
+    command: npm run dev
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.pvz-spa.rule=Host(`localhost`)"
+        - "traefik.http.routers.pvz-spa.entrypoints=web"
+        - "traefik.http.routers.pvz-spa.priority=1"
+        - "traefik.http.services.pvz-spa-svc.loadbalancer.server.port=9000"
+        - "traefik.http.routers.pvz-spa.service=pvz-spa-svc"
+
+  db:
+    ports:
+      - "5432:5432"
+
+  minio:
+    environment:
+      MINIO_DOMAIN: "s3.localhost"
+      MINIO_BROWSER_REDIRECT_URL: "http://console.s3.localhost"
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.minio-api.rule=Host(`s3.localhost`) || Host(`static.s3.localhost`) || Host(`media.s3.localhost`)"
+        - "traefik.http.routers.minio-api.entrypoints=web"
+        - "traefik.http.routers.minio-api.service=minio-api-svc"
+        - "traefik.http.services.minio-api-svc.loadbalancer.server.port=9000"
+        - "traefik.http.routers.minio-console.rule=Host(`console.s3.localhost`)"
+        - "traefik.http.routers.minio-console.entrypoints=web"
+        - "traefik.http.routers.minio-console.service=minio-console-svc"
+        - "traefik.http.services.minio-console-svc.loadbalancer.server.port=9001"
+
+  bot:
+    command: poetry run python runbot.py
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+
+  celery-worker:
+    deploy:
+      replicas: 1
+
+  celery-beat:
+    deploy:
+      replicas: 1

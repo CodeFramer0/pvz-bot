@@ -18,3 +18,5 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-interaction --no-ansi
 
 COPY . .
+
+CMD ["poetry", "run", "python", "runbot.py"]

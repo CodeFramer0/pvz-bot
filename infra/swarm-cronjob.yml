@@ -1,0 +1,17 @@
+networks:
+  pvz_net:
+    external: true
+
+services:
+  swarm-cronjob:
+    image: crazymax/swarm-cronjob:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - pvz_net
+    environment:
+      LOG_LEVEL: info
+      LOG_JSON: "false"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
