@@ -126,7 +126,9 @@ services:
 
   # Остальные сервисы (bot, celery)
   bot:
-    build: ./bot
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
     restart: always
     env_file: .env 
     depends_on:
