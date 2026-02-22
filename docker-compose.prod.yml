@@ -77,9 +77,18 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pvz.rule=Host(`sdsprinter.ru`)"
-      - "traefik.http.routers.pvz.entrypoints=websecure"
-      - "traefik.http.routers.pvz.tls.certresolver=le"
+      # /api
+      - "traefik.http.routers.pvz-api.rule=Host(`sdsprinter.ru`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.pvz-api.entrypoints=websecure"
+      - "traefik.http.routers.pvz-api.tls.certresolver=le"
+      - "traefik.http.routers.pvz-api.service=pvz"
+
+      # /admin
+      - "traefik.http.routers.pvz-admin.rule=Host(`sdsprinter.ru`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.pvz-admin.entrypoints=websecure"
+      - "traefik.http.routers.pvz-admin.tls.certresolver=le"
+      - "traefik.http.routers.pvz-admin.service=pvz"
+
       - "traefik.http.services.pvz.loadbalancer.server.port=8000"
   # ---------------- Bot ----------------
   bot:
@@ -244,3 +253,16 @@ services:
   #     retries: 5
   #   depends_on:
   #     - prometheus
+
+  pvz-frontend:
+    container_name: pvz-frontend
+    restart: unless-stopped # Добавлено: автозапуск
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pvz-spa.rule=Host(`sdsprinter.ru`)"
+      - "traefik.http.routers.pvz-spa.entrypoints=web"
+      - "traefik.http.routers.pvz-spa.priority=10"
+      - "traefik.http.services.pvz-frontend-svc.loadbalancer.server.port=80"

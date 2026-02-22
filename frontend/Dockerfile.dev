@@ -1,0 +1,20 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Устанавливаем CLI
+RUN npm install -g @quasar/cli
+
+# Копируем файлы зависимостей
+COPY package*.json ./
+
+# Ставим зависимости, игнорируя автоматический запуск quasar prepare
+RUN npm install --ignore-scripts
+
+# Теперь копируем ВЕСЬ проект (включая index.html, src и конфиги)
+COPY . .
+
+# Прокидываем порт для dev-сервера
+EXPOSE 9000
+
+# Запускаем сервер разработки
+CMD ["quasar", "dev", "-m", "spa", "--hostname", "0.0.0.0"]

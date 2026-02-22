@@ -1,0 +1,29 @@
+# --- Используем Node для билда SPA ---
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+# Копируем package.json и package-lock.json для кеша
+COPY package*.json ./
+
+# Ставим зависимости, но без quasar prepare
+RUN npm install --ignore-scripts
+
+# Копируем весь проект после установки зависимостей
+COPY . .
+
+# Теперь Quasar может запустить prepare и билд
+RUN npx quasar build -m spa
+
+# --- Минималистичный Caddy для отдачи статики ---
+FROM caddy:2.8.0-alpine
+
+# Копируем билд Quasar в папку Caddy для отдачи
+COPY --from=build /app/dist/spa /usr/share/caddy
+
+# Копируем Caddyfile для конфигурации (если нужен)
+COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

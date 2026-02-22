@@ -72,10 +72,20 @@ services:
       redis:
         condition: service_healthy
     labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.pvz.rule=Host(`pvz.localhost`) || Host(`localhost`) || Host(`10.0.2.2`)"
-    - "traefik.http.routers.pvz.entrypoints=web"
-    - "traefik.http.services.pvz.loadbalancer.server.port=8000"
+        - "traefik.enable=true"
+        # DJANGO ADMIN
+        - "traefik.http.routers.pvz-admin.rule=Host(`localhost`) && PathPrefix(`/admin`)"
+        - "traefik.http.routers.pvz-admin.entrypoints=web"
+        - "traefik.http.routers.pvz-admin.priority=10"
+        - "traefik.http.routers.pvz-admin.service=pvz-django-svc"
+        # DJANGO API
+        - "traefik.http.routers.pvz-api.rule=Host(`localhost`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.pvz-api.entrypoints=web"
+        - "traefik.http.routers.pvz-api.priority=10"
+        - "traefik.http.routers.pvz-api.service=pvz-django-svc"
+        # SERVICE
+        - "traefik.http.services.pvz-django-svc.loadbalancer.server.port=8000"
+
 
   # ---------------- Bot ----------------
   bot:
@@ -189,6 +199,25 @@ services:
     volumes:
       - ./minio_init.sh:/minio_init.sh
     entrypoint: ["/bin/sh", "/minio_init.sh"] 
+
+  pvz-frontend:
+    container_name: pvz-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pvz-spa.rule=Host(`localhost`) && PathPrefix(`/`)"
+      - "traefik.http.routers.pvz-spa.entrypoints=web"
+      - "traefik.http.routers.pvz-spa.priority=1"
+      - "traefik.http.services.pvz-frontend-svc.loadbalancer.server.port=9000"
+
   # prometheus:
   #   container_name: pvz-prometheus
   #   image: prom/prometheus:latest
