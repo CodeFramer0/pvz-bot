@@ -69,12 +69,7 @@ services:
     command: sh /backend/entrypoint.prod.sh
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      labels:
+    labels:
         - "traefik.enable=true"
 
         # middleware
@@ -95,6 +90,11 @@ services:
         - "traefik.http.routers.pvz-admin.service=pvz"
 
         - "traefik.http.services.pvz.loadbalancer.server.port=8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   # ---------------- Bot ----------------
   bot:
     container_name: pvz-bot
