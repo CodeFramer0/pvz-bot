@@ -9,6 +9,7 @@ volumes:
 
 services:
   traefik:
+    container_name: pvz-traefik
     image: traefik:latest
     restart: always
     command:
@@ -32,7 +33,7 @@ services:
       - ./acme.json:/data/acme.json 
 
   db:
-    container_name: db
+    container_name: pvz-db
     image: postgres:16.2
     restart: always
     env_file: .env
