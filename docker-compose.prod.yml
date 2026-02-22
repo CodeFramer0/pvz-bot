@@ -51,8 +51,9 @@ services:
       interval: 10s
 
   web:
-    build: ./backend
-    dockerfile: Dockerfile
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     restart: always
     stop_grace_period: 30s 
     deploy:
@@ -125,14 +126,18 @@ services:
       web: { condition: service_healthy }
 
   celery-worker:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     command: celery -A core worker -l info
     env_file: .env
     depends_on:
       redis: { condition: service_healthy }
 
   celery-beat:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     command: celery -A core beat -l info
     env_file: .env
     depends_on:
