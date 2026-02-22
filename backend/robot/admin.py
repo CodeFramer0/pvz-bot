@@ -140,6 +140,7 @@ class OrderAdmin(admin.ModelAdmin):
             "customer__id",
             "customer__telegram_user__nick_name", 
             "customer__telegram_user__name",
+            "customer__telegram_user__user_id",
             "marketplace__name",
         )
     ordering = ("-date_created",)
