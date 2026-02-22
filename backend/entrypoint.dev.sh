@@ -45,5 +45,5 @@ exec poetry run gunicorn core.wsgi:application \
   --timeout 120 \
   --max-requests 1200 \
   --max-requests-jitter 100 \
-  --access-log - \
+  --access-logfile - \
   --error-log -

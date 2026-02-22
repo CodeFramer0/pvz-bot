@@ -134,12 +134,6 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     marketplace_id = user_data.get("marketplace_id")
     marketplace_name = user_data.get("marketplace")
 
-    try:
-        customer_id = int(user["app_user_id"])
-    except (TypeError, ValueError):
-        await bot.send_message(chat_id, "Ошибка: неверный ID пользователя.")
-        return None
-
     # Получаем объекты PickupPoint и Marketplace
     pickup_point = await pickup_point_api.get(id=pickup_point_id)
 
@@ -151,15 +145,15 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     # Создаем заказ через API
     try:
         order = await order_api.post_multipart(
-            json={
+            fields={
                 "full_name": full_name,
-                "pickup_point_id": pickup_point_id,
-                "marketplace_id": marketplace_id,
-                "customer_id": customer_id,
+                "pickup_point": pickup_point_id,
+                "marketplace": marketplace_id,
+                "customer_id": user["app_user_id"],
                 "amount": amount,
                 "comment": comment,
             },
-            files={"barcode_image": image_bytes},
+            files={"barcode_image": image_bytes}
         )
     except APIError as e:
         detail = e.detail
