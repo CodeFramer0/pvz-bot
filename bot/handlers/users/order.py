@@ -135,14 +135,13 @@ async def create_order(chat_id: int, user: dict, user_data: dict, comment: str =
     marketplace_name = user_data.get("marketplace")
 
     try:
-        customer_id = int(user["app_user"])
+        customer_id = int(user["app_user_id"])
     except (TypeError, ValueError):
         await bot.send_message(chat_id, "Ошибка: неверный ID пользователя.")
         return None
 
     # Получаем объекты PickupPoint и Marketplace
     pickup_point = await pickup_point_api.get(id=pickup_point_id)
-    marketplace = await marketplace_api.get(id=marketplace_id)
 
     # Загружаем файл штрих-кода
     image_data = await bot.download_file_by_id(file_id)
