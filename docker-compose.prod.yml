@@ -131,6 +131,9 @@ services:
       dockerfile: Dockerfile
     restart: always
     env_file: .env 
+    depends_on:
+      web: { condition: service_healthy }
+    command: python runbot.py
 
   celery-worker:
     build:
