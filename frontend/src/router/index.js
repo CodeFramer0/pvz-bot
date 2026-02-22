@@ -4,15 +4,17 @@ import { useAuthStore } from 'src/stores/auth-store'
 const routes = [
   {
     path: '/',
+    component: () => import('layouts/MainLayout.vue'),  // ← добавь это
     children: [
-      { path: '', name: 'Index', component: () => import('pages/IndexPage.vue'), meta: { requiresAuth: true } },
-      { path: 'add', name: 'AddOrder', component: () => import('pages/AddOrder.vue'), meta: { requiresAuth: true } },
-      { path: 'profile', name: 'Profile', component: () => import('pages/ProfilePage.vue'), meta: { requiresAuth: true } },
+      { path: '',           name: 'Index',       component: () => import('pages/IndexPage.vue'),       meta: { requiresAuth: true } },
+      { path: 'add',        name: 'AddOrder',    component: () => import('pages/AddOrder.vue'),        meta: { requiresAuth: true } },
+      { path: 'profile',    name: 'Profile',     component: () => import('pages/ProfilePage.vue'),     meta: { requiresAuth: true } },
       { path: 'orders/:id', name: 'OrderDetail', component: () => import('pages/OrderDetailPage.vue'), meta: { requiresAuth: true } },
-      { path: 'login', name: 'Login', component: () => import('pages/LoginPage.vue'), meta: { requiresAuth: false } },
-      { path: 'register', name: 'Register', component: () => import('pages/RegisterPage.vue'), meta: { requiresAuth: false } },
     ]
   },
+  // Auth страницы — без лейаута
+  { path: '/login',    name: 'Login',    component: () => import('pages/LoginPage.vue'),    meta: { requiresAuth: false } },
+  { path: '/register', name: 'Register', component: () => import('pages/RegisterPage.vue'), meta: { requiresAuth: false } },
   {
     path: '/:catchAll(.*)*',
     name: 'NotFound',
@@ -25,7 +27,6 @@ const router = createRouter({
   routes
 })
 
-// Проверка авторизации
 let initialCheckDone = false
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()

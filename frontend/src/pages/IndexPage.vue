@@ -42,7 +42,6 @@
             v-model="searchQuery"
             outlined dense
             placeholder="Поиск по ID или маркетплейсу..."
-            bg-color="white"
             class="pvz-search"
           >
             <template v-slot:prepend><q-icon name="search" /></template>
@@ -165,14 +164,6 @@
 
     </div><!-- /orders-page-wrapper -->
 
-    <!-- FAB (mobile only) -->
-    <q-page-sticky position="bottom-right" :offset="[18, 78]">
-      <q-btn fab icon="add" color="primary" class="pvz-fab" @click="$router.push('/add')">
-        <q-tooltip anchor="center left" self="center right" :offset="[10, 0]">
-          Создать заказ
-        </q-tooltip>
-      </q-btn>
-    </q-page-sticky>
 
     <!-- Detail Dialog -->
     <q-dialog v-model="showDetail" transition-show="slide-up" transition-hide="slide-down">

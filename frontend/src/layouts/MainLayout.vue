@@ -2,195 +2,39 @@
   <q-layout view="lHh LpR lFf" class="main-layout">
 
     <!-- ═══════════════════════════════════════════════════════
-         DESKTOP SIDEBAR — красивая навигация
+         DESKTOP SIDEBAR
     ════════════════════════════════════════════════════════ -->
     <q-drawer
-      v-if="isDesktop"
+      v-if="showNav && isDesktop"
       :model-value="true"
-      :width="240"
+      :width="sidebarCollapsed ? 68 : 240"
       :breakpoint="0"
       class="sidebar"
       :class="{ 'sidebar--collapsed': sidebarCollapsed }"
     >
-      <!-- LOGO SECTION -->
-      <div class="sidebar-logo">
-        <div class="logo-icon">🛍️</div>
-        <div v-if="!sidebarCollapsed" class="logo-text">
-          <div class="logo-title">PVZ Bot</div>
-          <div class="logo-tag">beta</div>
-        </div>
-        <button 
-          v-if="!sidebarCollapsed"
-          class="logo-collapse-btn"
-          @click="sidebarCollapsed = true"
-          title="Свернуть меню"
-        >
-          ‹
-        </button>
-      </div>
+      <div class="sidebar__inner">
 
-      <!-- NAVIGATION SECTION -->
-      <nav class="sidebar-nav">
-        <div class="nav-label">{{ sidebarCollapsed ? '' : 'Навигация' }}</div>
-
-        <router-link
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          custom
-          v-slot="{ isExactActive, navigate }"
-        >
-          <div
-            :class="['nav-item', { 'nav-item--active': isExactActive }]"
-            @click="navigate"
-            :title="item.label"
+        <!-- Logo -->
+        <div class="sidebar__logo" :class="{ 'sidebar__logo--collapsed': sidebarCollapsed }">
+          <div class="sidebar__logo-icon">🛍️</div>
+          <transition name="fade-slide">
+            <div v-if="!sidebarCollapsed" class="sidebar__logo-text">
+              <span class="sidebar__logo-title">PVZ Bot</span>
+              <span class="sidebar__logo-badge">BETA</span>
+            </div>
+          </transition>
+          <button
+            v-if="!sidebarCollapsed"
+            class="sidebar__collapse-btn"
+            @click="sidebarCollapsed = true"
           >
-            <div class="nav-item-icon">
-              <q-icon :name="item.icon" size="20px" />
-            </div>
-            
-            <div v-if="!sidebarCollapsed" class="nav-item-content">
-              <span class="nav-item-label">{{ item.label }}</span>
-              <div v-if="item.badge && getCount() > 0" class="nav-item-badge">
-                {{ getCount() }}
-              </div>
-            </div>
-
-            <q-badge 
-              v-else-if="item.badge && getCount() > 0"
-              color="negative"
-              floating
-              rounded
-            >
-              {{ getCount() }}
-            </q-badge>
-
-            <!-- Active indicator -->
-            <div v-if="isExactActive && !sidebarCollapsed" class="nav-item-indicator"></div>
-          </div>
-        </router-link>
-      </nav>
-
-      <!-- SPACER -->
-      <div class="sidebar-spacer"></div>
-
-      <!-- CREATE ORDER BUTTON -->
-      <div class="sidebar-cta">
-        <router-link to="/add" custom v-slot="{ navigate }">
-          <button class="cta-btn" @click="navigate" :title="sidebarCollapsed ? 'Создать заказ' : ''">
-            <q-icon name="add_circle" size="24px" />
-            <span v-if="!sidebarCollapsed">Создать заказ</span>
+            <q-icon name="chevron_left" size="18px" />
           </button>
-        </router-link>
-      </div>
-
-      <!-- USER PROFILE SECTION -->
-      <div class="sidebar-user">
-        <div class="user-avatar">
-          {{ auth.user?.username?.charAt(0).toUpperCase() || 'U' }}
-        </div>
-        
-        <div v-if="!sidebarCollapsed" class="user-info">
-          <div class="user-name">{{ auth.user?.username }}</div>
-          <div class="user-email">{{ auth.user?.email }}</div>
         </div>
 
-        <q-menu
-          anchor="top right"
-          self="bottom left"
-          :offset="[0, 8]"
-        >
-          <q-list style="min-width: 180px">
-            <q-item clickable v-ripple @click="$router.push('/profile')">
-              <q-item-section avatar>
-                <q-icon name="person" />
-              </q-item-section>
-              <q-item-section>Профиль</q-item-section>
-            </q-item>
-            <q-separator />
-            <q-item clickable v-ripple @click="onLogout">
-              <q-item-section avatar>
-                <q-icon name="logout" color="negative" />
-              </q-item-section>
-              <q-item-section>Выйти</q-item-section>
-            </q-item>
-          </q-list>
-        </q-menu>
-
-        <button 
-          v-if="!sidebarCollapsed"
-          class="user-logout-btn"
-          @click="onLogout"
-          title="Выйти"
-        >
-          <q-icon name="logout" size="16px" />
-        </button>
-      </div>
-
-      <!-- COLLAPSE BUTTON (when collapsed) -->
-      <div v-if="sidebarCollapsed" class="sidebar-expand">
-        <button 
-          class="expand-btn"
-          @click="sidebarCollapsed = false"
-          title="Развернуть меню"
-        >
-          ›
-        </button>
-      </div>
-    </q-drawer>
-
-    <!-- ═══════════════════════════════════════════════════════
-         MOBILE HEADER — красивый топ-бар
-    ════════════════════════════════════════════════════════ -->
-    <q-header v-if="!isDesktop" class="mobile-header">
-      <q-toolbar class="mobile-toolbar">
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          color="white"
-          @click="mobileDrawerOpen = true"
-          class="mobile-menu-btn"
-        />
-        
-        <q-toolbar-title class="mobile-title">
-          {{ currentPageTitle }}
-        </q-toolbar-title>
-
-        <q-btn
-          flat
-          dense
-          round
-          icon="account_circle"
-          color="white"
-          to="/profile"
-          class="mobile-profile-btn"
-        />
-      </q-toolbar>
-    </q-header>
-
-    <!-- MOBILE DRAWER -->
-    <q-drawer
-      v-model="mobileDrawerOpen"
-      side="left"
-      bordered
-      class="mobile-drawer"
-    >
-      <q-scroll-area class="drawer-scroll">
-        <!-- Drawer Logo -->
-        <div class="drawer-logo">
-          <div class="logo-icon">🛍️</div>
-          <div>
-            <div class="logo-title">PVZ Bot</div>
-            <div class="logo-tag">beta</div>
-          </div>
-        </div>
-
-        <!-- Drawer Navigation -->
-        <nav class="drawer-nav">
-          <p class="nav-label">Навигация</p>
-
+        <!-- Nav -->
+        <nav class="sidebar__nav">
+          <p class="sidebar__nav-label" v-if="!sidebarCollapsed">Навигация</p>
           <router-link
             v-for="item in navItems"
             :key="item.to"
@@ -198,65 +42,110 @@
             custom
             v-slot="{ isExactActive, navigate }"
           >
-            <div
-              :class="['drawer-nav-item', { 'drawer-nav-item--active': isExactActive }]"
-              @click="navigate; mobileDrawerOpen = false"
+            <button
+              :class="['sidebar__nav-item', { 'sidebar__nav-item--active': isExactActive }]"
+              @click="navigate"
+              :title="sidebarCollapsed ? item.label : ''"
             >
-              <q-icon :name="item.icon" size="20px" />
-              <span class="drawer-nav-label">{{ item.label }}</span>
-              <q-badge v-if="item.badge && getCount() > 0" color="negative">
-                {{ getCount() }}
-              </q-badge>
-            </div>
+              <div class="sidebar__nav-item-icon">
+                <q-icon :name="isExactActive ? item.iconActive : item.icon" size="20px" />
+              </div>
+              <transition name="fade-slide">
+                <span v-if="!sidebarCollapsed" class="sidebar__nav-item-label">{{ item.label }}</span>
+              </transition>
+              <div v-if="isExactActive" class="sidebar__nav-item-indicator"></div>
+            </button>
           </router-link>
         </nav>
 
-        <!-- Drawer CTA -->
-        <div class="drawer-cta">
+        <div class="sidebar__spacer"></div>
+
+        <!-- CTA -->
+        <div class="sidebar__cta" :class="{ 'sidebar__cta--collapsed': sidebarCollapsed }">
           <router-link to="/add" custom v-slot="{ navigate }">
-            <button 
-              class="drawer-cta-btn"
-              @click="navigate; mobileDrawerOpen = false"
-            >
+            <button class="sidebar__cta-btn" @click="navigate" :title="sidebarCollapsed ? 'Создать заказ' : ''">
               <q-icon name="add" size="20px" />
-              <span>Создать заказ</span>
+              <transition name="fade-slide">
+                <span v-if="!sidebarCollapsed">Создать заказ</span>
+              </transition>
             </button>
           </router-link>
         </div>
 
-        <!-- Drawer User -->
-        <div class="drawer-spacer"></div>
-        <div class="drawer-user">
-          <div class="user-avatar">
-            {{ auth.user?.username?.charAt(0).toUpperCase() || 'U' }}
+        <!-- User -->
+        <div class="sidebar__user" :class="{ 'sidebar__user--collapsed': sidebarCollapsed }">
+          <div class="sidebar__user-avatar" v-ripple>
+            {{ userInitial }}
+            <q-menu anchor="top right" self="bottom left" :offset="[0, 8]">
+              <q-list style="min-width: 180px; border-radius: 12px; overflow: hidden;">
+                <q-item clickable v-ripple @click="$router.push('/profile')">
+                  <q-item-section avatar><q-icon name="person_outline" /></q-item-section>
+                  <q-item-section>Профиль</q-item-section>
+                </q-item>
+                <q-separator />
+                <q-item clickable v-ripple @click="onLogout">
+                  <q-item-section avatar><q-icon name="logout" color="negative" /></q-item-section>
+                  <q-item-section class="text-negative">Выйти</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
           </div>
-          <div class="user-info">
-            <div class="user-name">{{ auth.user?.username }}</div>
-            <div class="user-email">{{ auth.user?.email }}</div>
-          </div>
+          <transition name="fade-slide">
+            <div v-if="!sidebarCollapsed" class="sidebar__user-info">
+              <span class="sidebar__user-name">{{ auth.user?.username }}</span>
+              <span class="sidebar__user-email">{{ auth.user?.email }}</span>
+            </div>
+          </transition>
+          <transition name="fade-slide">
+            <button
+              v-if="!sidebarCollapsed"
+              class="sidebar__user-logout"
+              @click="onLogout"
+              title="Выйти"
+            >
+              <q-icon name="logout" size="16px" />
+            </button>
+          </transition>
         </div>
 
-        <!-- Drawer Actions -->
-        <q-item clickable v-ripple @click="onLogout">
-          <q-item-section avatar>
-            <q-icon name="logout" color="negative" />
-          </q-item-section>
-          <q-item-section>Выйти</q-item-section>
-        </q-item>
-      </q-scroll-area>
+        <!-- Expand button when collapsed -->
+        <transition name="fade">
+          <div v-if="sidebarCollapsed" class="sidebar__expand">
+            <button class="sidebar__expand-btn" @click="sidebarCollapsed = false" title="Развернуть">
+              <q-icon name="chevron_right" size="18px" />
+            </button>
+          </div>
+        </transition>
+
+      </div>
     </q-drawer>
 
     <!-- ═══════════════════════════════════════════════════════
-         PAGE CONTAINER
+         MOBILE HEADER
+    ════════════════════════════════════════════════════════ -->
+    <q-header v-if="showNav && !isDesktop" class="mobile-header" elevated>
+      <div class="mobile-header__bar">
+        <div class="mobile-header__logo">
+          <span class="mobile-header__logo-icon">🛍️</span>
+          <span class="mobile-header__logo-title">PVZ Bot</span>
+        </div>
+        <router-link to="/profile" class="mobile-header__avatar">
+          {{ userInitial }}
+        </router-link>
+      </div>
+    </q-header>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE CONTENT
     ════════════════════════════════════════════════════════ -->
     <q-page-container>
       <router-view />
     </q-page-container>
 
     <!-- ═══════════════════════════════════════════════════════
-         MOBILE BOTTOM NAVIGATION — красивая мобильная навигация
+         MOBILE BOTTOM NAV
     ════════════════════════════════════════════════════════ -->
-    <q-footer v-if="!isDesktop" class="mobile-footer">
+    <q-footer v-if="showNav && !isDesktop" class="mobile-footer">
       <div class="bottom-nav">
         <router-link
           v-for="item in bottomNavItems"
@@ -266,24 +155,14 @@
           v-slot="{ isExactActive, navigate }"
         >
           <button
-            :class="['bottom-nav-item', { 'bottom-nav-item--active': isExactActive }]"
+            :class="['bottom-nav__item', { 'bottom-nav__item--active': isExactActive }]"
             @click="navigate"
           >
-            <div class="nav-icon-wrapper">
-              <q-icon 
-                :name="isExactActive ? item.iconActive : item.icon"
-                size="24px"
-              />
-              <q-badge 
-                v-if="item.badge && getCount() > 0"
-                color="negative"
-                floating
-                rounded
-              >
-                {{ getCount() }}
-              </q-badge>
+            <div class="bottom-nav__icon-wrap">
+              <q-icon :name="isExactActive ? item.iconActive : item.icon" size="22px" />
+              <div v-if="isExactActive" class="bottom-nav__dot"></div>
             </div>
-            <span class="nav-label">{{ item.label }}</span>
+            <span class="bottom-nav__label">{{ item.label }}</span>
           </button>
         </router-link>
       </div>
@@ -303,31 +182,41 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
+// ── Responsive ──────────────────────────────────────────────
 const windowWidth = ref(window.innerWidth)
 const isDesktop = computed(() => windowWidth.value >= 1024)
-const sidebarCollapsed = ref(false)
-const mobileDrawerOpen = ref(false)
+const onResize = () => { windowWidth.value = window.innerWidth }
+onMounted(async () => {
+  window.addEventListener('resize', onResize)
+  await auth.getMe()
+})
+onUnmounted(() => window.removeEventListener('resize', onResize))
 
+// ── Show nav only outside auth pages ────────────────────────
+const AUTH_ROUTES = ['login', 'register']
+const showNav = computed(() => !AUTH_ROUTES.includes(route.name))
+
+// ── Sidebar collapse ────────────────────────────────────────
+const sidebarCollapsed = ref(false)
+
+// ── User ────────────────────────────────────────────────────
+const userInitial = computed(() =>
+  auth.user?.username?.charAt(0).toUpperCase() || 'U'
+)
+
+// ── Nav items ───────────────────────────────────────────────
 const navItems = [
-  { to: '/',        label: 'Заказы',    icon: 'inbox',      iconActive: 'inbox',      badge: true },
-  { to: '/profile', label: 'Профиль',   icon: 'person',     iconActive: 'person',     badge: false },
+  { to: '/',        label: 'Мои заказы', icon: 'inbox',  iconActive: 'inbox' },
+  { to: '/profile', label: 'Профиль',    icon: 'person', iconActive: 'person' },
 ]
 
 const bottomNavItems = [
-  { to: '/',        label: 'Заказы',    icon: 'inbox',      iconActive: 'inbox',      badge: true },
-  { to: '/add',     label: 'Создать',   icon: 'add_circle', iconActive: 'add_circle', badge: false },
-  { to: '/profile', label: 'Профиль',   icon: 'person',     iconActive: 'person',     badge: false },
+  { to: '/',        label: 'Заказы',  icon: 'inbox',      iconActive: 'inbox'      },
+  { to: '/add',     label: 'Создать', icon: 'add_circle_outline', iconActive: 'add_circle' },
+  { to: '/profile', label: 'Профиль', icon: 'person_outline',     iconActive: 'person'     },
 ]
 
-const pageTitles = { 
-  '/': 'Мои заказы', 
-  '/add': 'Создать заказ', 
-  '/profile': 'Профиль' 
-}
-const currentPageTitle = computed(() => pageTitles[route.path] || 'PVZ Bot')
-
-const getCount = () => 0
-
+// ── Logout ──────────────────────────────────────────────────
 const onLogout = () => {
   $q.dialog({
     title: 'Выход',
@@ -335,193 +224,74 @@ const onLogout = () => {
     cancel: { label: 'Отмена', flat: true, color: 'grey-7' },
     ok:     { label: 'Выйти', color: 'negative', unelevated: true },
     persistent: true,
-  }).onOk(() => { 
+  }).onOk(() => {
     auth.logout()
-    router.push('/login') 
+    router.push('/login')
   })
 }
 
-const onResize = () => { windowWidth.value = window.innerWidth }
-
-onMounted(async () => { 
-  window.addEventListener('resize', onResize)
-  await auth.getMe()
-})
-
-onUnmounted(() => window.removeEventListener('resize', onResize))
 </script>
 
 <style lang="scss" scoped>
 @use 'src/css/variables' as *;
 
-// ────────────────────────────────────────────────────────────
-// DESKTOP SIDEBAR
-// ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// SIDEBAR
+// ════════════════════════════════════════════════════════════
 
 .sidebar {
-  background: linear-gradient(180deg, #0e0e14 0%, #15151f 100%) !important;
-  display: flex !important;
-  flex-direction: column;
-  padding: 0 !important;
+  background: linear-gradient(180deg, #0e0e14 0%, #13131d 100%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  // Top gradient bar
+  // Top accent line
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 2px;
     background: $gradient-brand;
     z-index: 10;
   }
-
-  &--collapsed {
-    :deep(.q-drawer__content) {
-      padding-left: 4px;
-      padding-right: 4px;
-    }
-  }
 }
 
-// Logo
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 20px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  position: relative;
-}
-
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-  border: 1.5px solid rgba(102, 126, 234, 0.4);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-  transition: all 0.3s;
-
-  &:hover {
-    border-color: rgba(102, 126, 234, 0.6);
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
-  }
-}
-
-.logo-text {
+.sidebar__inner {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  flex: 1;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
 }
 
-.logo-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.3px;
-}
+// ── Logo ──────────────────────────────────────────────────
 
-.logo-tag {
-  font-size: 10px;
-  font-weight: 700;
-  color: $primary-start;
-  background: rgba(102, 126, 234, 0.15);
-  border: 1px solid rgba(102, 126, 234, 0.3);
-  padding: 2px 7px;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  width: fit-content;
-}
-
-.logo-collapse-btn {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-left: auto;
-
-  &:hover {
-    color: rgba(255, 255, 255, 0.8);
-  }
-}
-
-// Navigation
-.sidebar-nav {
-  padding: 12px 8px;
-  flex: 0;
-}
-
-.nav-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.2);
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  padding: 0 8px;
-  margin-bottom: 8px;
-}
-
-.nav-item {
+.sidebar__logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 2px;
-  position: relative;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
+  padding: 20px 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 72px;
 
-  &:hover:not(&--active) {
-    background: rgba(255, 255, 255, 0.06);
-
-    .nav-item-icon {
-      color: rgba(255, 255, 255, 0.7);
-    }
-  }
-
-  &--active {
-    background: rgba(102, 126, 234, 0.15);
-
-    .nav-item-icon {
-      color: $primary-start;
-      transform: scale(1.1);
-    }
-
-    .nav-item-label {
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .nav-item-indicator {
-      display: block;
-    }
+  &--collapsed {
+    justify-content: center;
+    padding: 20px 0 18px;
   }
 }
 
-.nav-item-icon {
-  color: rgba(255, 255, 255, 0.4);
+.sidebar__logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(102,126,234,0.2), rgba(118,75,162,0.2));
+  border: 1.5px solid rgba(102,126,234,0.4);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s;
+  font-size: 18px;
 }
 
-.nav-item-content {
+.sidebar__logo-text {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -529,27 +299,114 @@ onUnmounted(() => window.removeEventListener('resize', onResize))
   min-width: 0;
 }
 
-.nav-item-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  transition: all 0.2s;
+.sidebar__logo-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
   white-space: nowrap;
 }
 
-.nav-item-badge {
-  background: #ef4444;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
+.sidebar__logo-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: $primary-start;
+  background: rgba(102,126,234,0.15);
+  border: 1px solid rgba(102,126,234,0.35);
   padding: 2px 6px;
-  border-radius: 10px;
-  margin-left: auto;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
   flex-shrink: 0;
 }
 
-.nav-item-indicator {
-  display: none;
+.sidebar__collapse-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 7px;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+  }
+}
+
+// ── Nav ───────────────────────────────────────────────────
+
+.sidebar__nav {
+  padding: 16px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 0 6px;
+  margin: 0 0 8px;
+}
+
+.sidebar__nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.18s;
+  text-decoration: none;
+  text-align: left;
+
+  &:hover:not(&--active) {
+    background: rgba(255,255,255,0.05);
+
+    .sidebar__nav-item-icon { color: rgba(255,255,255,0.6); }
+    .sidebar__nav-item-label { color: rgba(255,255,255,0.7); }
+  }
+
+  &--active {
+    background: rgba(102,126,234,0.14);
+
+    .sidebar__nav-item-icon { color: $primary-start; }
+    .sidebar__nav-item-label { color: #fff; font-weight: 600; }
+  }
+}
+
+.sidebar__nav-item-icon {
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.18s;
+}
+
+.sidebar__nav-item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+  transition: color 0.18s;
+}
+
+.sidebar__nav-item-indicator {
   position: absolute;
   left: 0;
   top: 50%;
@@ -557,22 +414,33 @@ onUnmounted(() => window.removeEventListener('resize', onResize))
   width: 3px;
   height: 60%;
   background: $primary-start;
-  border-radius: 0 2px 2px 0;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px rgba($primary-start, 0.5);
 }
 
-// Spacer
-.sidebar-spacer {
-  flex: 1;
+// ── Spacer ────────────────────────────────────────────────
+
+.sidebar__spacer { flex: 1; }
+
+// ── CTA ───────────────────────────────────────────────────
+
+.sidebar__cta {
+  padding: 0 10px 12px;
+
+  &--collapsed {
+    padding: 0 10px 12px;
+    display: flex;
+    justify-content: center;
+  }
 }
 
-// CTA Button
-.sidebar-cta {
-  padding: 16px 8px 12px;
-}
-
-.cta-btn {
+.sidebar__cta-btn {
   width: 100%;
-  height: 42px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: $gradient-brand;
   border: none;
   border-radius: 10px;
@@ -580,45 +448,48 @@ onUnmounted(() => window.removeEventListener('resize', onResize))
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 16px rgba($primary-start, 0.3);
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba($primary-start, 0.4);
   }
 
-  &:active {
-    transform: translateY(0);
-  }
+  &:active { transform: none; }
 }
 
-// User Profile
-.sidebar-user {
+// ── User ──────────────────────────────────────────────────
+
+.sidebar__user {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 12px;
-  margin: 8px 8px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 10px;
+  margin: 0 10px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 10px;
-  transition: all 0.2s;
+  transition: background 0.2s;
+  cursor: pointer;
   min-width: 0;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.15);
+  &:hover { background: rgba(255,255,255,0.07); }
+
+  &--collapsed {
+    justify-content: center;
+    padding: 10px 0;
+    margin: 0 10px 16px;
+    background: none;
+    border: none;
   }
 }
 
-.user-avatar {
-  width: 36px;
-  height: 36px;
+.sidebar__user-avatar {
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background: $gradient-brand;
   color: #fff;
@@ -628,257 +499,201 @@ onUnmounted(() => window.removeEventListener('resize', onResize))
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
 }
 
-.user-info {
+.sidebar__user-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
-.user-name {
+.sidebar__user-name {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255,255,255,0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.user-email {
+.sidebar__user-email {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255,255,255,0.3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.user-logout-btn {
+.sidebar__user-logout {
+  flex-shrink: 0;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255,255,255,0.2);
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
   transition: all 0.15s;
 
-  &:hover {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-  }
+  &:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
 }
 
-// Sidebar Expand (when collapsed)
-.sidebar-expand {
-  padding: 8px;
+// ── Expand (collapsed state) ──────────────────────────────
+
+.sidebar__expand {
+  padding: 0 10px 16px;
 }
 
-.expand-btn {
+.sidebar__expand-btn {
   width: 100%;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  height: 34px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
-  font-size: 18px;
+  color: rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-  }
+  &:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.7); }
 }
 
-// ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
 // MOBILE HEADER
-// ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
 
 .mobile-header {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.mobile-toolbar {
-  background: $gradient-brand;
-  padding-top: env(safe-area-inset-top, 0px);
-  min-height: calc(56px + env(safe-area-inset-top, 0px));
+.mobile-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  background: linear-gradient(180deg, #0e0e14 0%, transparent 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.mobile-menu-btn {
-  color: #fff;
+.mobile-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.mobile-title {
+.mobile-header__logo-icon { font-size: 22px; }
+
+.mobile-header__logo-title {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
-  text-align: center;
+  letter-spacing: -0.3px;
 }
 
-.mobile-profile-btn {
-  color: #fff;
-}
-
-// Mobile Drawer
-.mobile-drawer {
-  background: #fafbfc;
-}
-
-.drawer-scroll {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.drawer-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 16px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.drawer-nav {
-  padding: 12px 0;
-  flex: 0;
-}
-
-.drawer-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  color: inherit;
-  margin: 0 8px;
-  border-radius: 8px;
-
-  &:hover:not(&--active) {
-    background: rgba(0, 0, 0, 0.04);
-  }
-
-  &--active {
-    background: rgba(102, 126, 234, 0.1);
-    color: $primary-start;
-    font-weight: 600;
-  }
-}
-
-.drawer-nav-label {
-  font-size: 14px;
-  font-weight: 500;
-  flex: 1;
-}
-
-.drawer-cta {
-  padding: 12px 8px;
-}
-
-.drawer-cta-btn {
-  width: 100%;
-  height: 40px;
+.mobile-header__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   background: $gradient-brand;
-  border: none;
-  border-radius: 10px;
   color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-
-  &:active {
-    opacity: 0.9;
-  }
+  text-decoration: none;
+  box-shadow: 0 2px 10px rgba($primary-start, 0.35);
 }
 
-.drawer-spacer {
-  flex: 1;
-}
-
-.drawer-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  margin: 0 8px 8px;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-}
-
-// ────────────────────────────────────────────────────────────
-// MOBILE BOTTOM NAVIGATION
-// ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// MOBILE BOTTOM NAV
+// ════════════════════════════════════════════════════════════
 
 .mobile-footer {
-  background: #fff !important;
-  border-top: 1px solid #e5e7eb !important;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  background: rgba(14, 14, 20, 0.92) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3) !important;
 }
 
 .bottom-nav {
   display: flex;
-  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.bottom-nav-item {
+.bottom-nav__item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   background: none;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #9ca3af;
-  font-size: 11px;
-  font-weight: 500;
-  text-decoration: none;
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 0.2s;
 
-  &:hover:not(&--active) {
-    color: #6b7280;
-  }
+  &:active { opacity: 0.7; }
 
   &--active {
     color: $primary-start;
-
-    .nav-icon-wrapper {
-      transform: scale(1.15);
-    }
   }
 }
 
-.nav-icon-wrapper {
+.bottom-nav__icon-wrap {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s;
 }
 
-.nav-label {
+.bottom-nav__dot {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: $primary-start;
+  box-shadow: 0 0 6px rgba($primary-start, 0.8);
+}
+
+.bottom-nav__label {
   font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
   white-space: nowrap;
-  transition: color 0.2s;
 }
 
+// ════════════════════════════════════════════════════════════
+// TRANSITIONS
+// ════════════════════════════════════════════════════════════
 
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.18s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

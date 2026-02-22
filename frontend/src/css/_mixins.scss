@@ -1,36 +1,25 @@
+// ════════════════════════════════════════════════════════════
+// MIXINS.SCSS — Reusable style patterns
+// ════════════════════════════════════════════════════════════
 @use 'variables' as *;
 
-// ─── Responsive Breakpoints ───────────────────────────────────
-
+// ─── Breakpoints ──────────────────────────────────────────────
 @mixin mobile  { @media (max-width: #{$bp-md - 1px}) { @content; } }
 @mixin tablet  { @media (min-width: $bp-md) and (max-width: #{$bp-lg - 1px}) { @content; } }
 @mixin desktop { @media (min-width: $bp-lg) { @content; } }
-@mixin touch   { @media (max-width: #{$bp-lg - 1px}) { @content; } } // mobile + tablet
-
-// ─── Platform Detection ───────────────────────────────────────
-
-// iOS Safari / PWA — определяется через supports
-@mixin ios-pwa {
-  @supports (-webkit-touch-callout: none) { @content; }
-}
-
-// Hover только на устройствах с мышью
-@mixin hover {
-  @media (hover: hover) and (pointer: fine) { @content; }
-}
+@mixin touch   { @media (max-width: #{$bp-lg - 1px}) { @content; } }
+@mixin hover   { @media (hover: hover) and (pointer: fine) { @content; } }
+@mixin ios-pwa { @supports (-webkit-touch-callout: none) { @content; } }
 
 // ─── Safe Area ────────────────────────────────────────────────
-
 @mixin safe-top($extra: 0px) {
   padding-top: calc(#{$extra} + env(safe-area-inset-top, 0px));
 }
-
 @mixin safe-bottom($extra: 0px) {
   padding-bottom: calc(#{$extra} + env(safe-area-inset-bottom, 0px));
 }
 
 // ─── Page Base ────────────────────────────────────────────────
-
 @mixin page-base {
   background: $gradient-brand-v;
   min-height: 100vh;
@@ -40,27 +29,24 @@
   }
 
   @include desktop {
-    background: $color-bg-page;
+    background: var(--pvz-bg);
     padding-bottom: 0;
-    min-height: 100vh;
   }
 }
 
-// ─── Page Header (мобильная шапка) ───────────────────────────
-
+// ─── Mobile Page Header ───────────────────────────────────────
 @mixin page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px $page-padding-x;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
   @include safe-top(16px);
 
-  .back-btn    { flex-shrink: 0; }
+  .back-btn      { flex-shrink: 0; }
   .header-spacer { width: 40px; flex-shrink: 0; }
-
-  .header-title {
+  .header-title  {
     margin: 0;
     color: $color-white;
     font-size: 18px;
@@ -69,47 +55,24 @@
     text-align: center;
   }
 
-  // На десктопе шапку не показываем — навигация в сайдбаре
-  @include desktop {
-    display: none;
-  }
+  @include desktop { display: none; }
 }
 
-// ─── Desktop Page Header (внутри контента) ───────────────────
-
-@mixin desktop-page-title {
-  @include desktop {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 28px;
-
-    h4, h3 {
-      margin: 0;
-      font-size: 26px;
-      font-weight: $font-weight-bold;
-      color: $color-text-dark;
-    }
-  }
-}
-
-// ─── Cards ───────────────────────────────────────────────────
-
+// ─── Cards ────────────────────────────────────────────────────
 @mixin card($radius: $radius-xl, $padding: 20px) {
-  background: $color-white;
+  background: var(--pvz-bg-card);
   border-radius: $radius;
   padding: $padding;
-  box-shadow: $shadow-md;
+  box-shadow: var(--pvz-shadow-card);
 }
 
 @mixin glass-card($radius: $radius-xl) {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,0.15);
   backdrop-filter: blur(10px);
   border-radius: $radius;
 }
 
-// ─── Buttons ─────────────────────────────────────────────────
-
+// ─── Buttons ──────────────────────────────────────────────────
 @mixin action-btn($height: 52px) {
   width: 100%;
   height: $height;
@@ -117,8 +80,7 @@
   font-weight: $font-weight-semibold;
 }
 
-// ─── Form Fields ─────────────────────────────────────────────
-
+// ─── Form Fields ──────────────────────────────────────────────
 @mixin field-control($radius: $radius-md, $height: 48px) {
   :deep(.q-field__control) {
     border-radius: $radius;
@@ -126,12 +88,11 @@
   }
 }
 
-// ─── Custom Tabs (mobile) ─────────────────────────────────────
-
+// ─── Custom Tabs ──────────────────────────────────────────────
 @mixin custom-tabs {
   display: flex;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,0.15);
   padding: 6px;
   border-radius: $radius-lg;
   backdrop-filter: blur(10px);
@@ -146,7 +107,7 @@
     border-radius: $radius-md;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255,255,255,0.7);
     position: relative;
 
     .tab-label { font-size: 12px; font-weight: $font-weight-semibold; }
@@ -172,13 +133,12 @@
   }
 }
 
-// ─── Auth Tabs ───────────────────────────────────────────────
-
+// ─── Auth Tabs ────────────────────────────────────────────────
 @mixin auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  background: #f3f4f6;
+  background: var(--pvz-bg-input);
   padding: 4px;
   border-radius: $radius-lg;
 
@@ -193,59 +153,67 @@
     transition: all 0.3s ease;
     font-weight: $font-weight-semibold;
     font-size: 14px;
-    color: $color-text-muted;
+    color: var(--pvz-text-muted);
 
     @include hover { &:hover { background: rgba(0,0,0,0.04); } }
 
     &.active {
-      background: $color-white;
+      background: var(--pvz-bg-card);
       color: $primary-start;
       box-shadow: $shadow-sm;
     }
   }
 }
 
-// ─── Step Circle ─────────────────────────────────────────────
-
+// ─── Step Circle ──────────────────────────────────────────────
 @mixin step-circle($size: 44px) {
   width: $size;
   height: $size;
   border-radius: 50%;
-  background: #f3f4f6;
+  background: var(--pvz-bg-input);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: $font-weight-bold;
   font-size: 16px;
-  color: $color-text-hint;
+  color: var(--pvz-text-hint);
   transition: all 0.3s ease;
 }
 
-// ─── Empty State ─────────────────────────────────────────────
-
+// ─── Empty State ──────────────────────────────────────────────
 @mixin empty-state {
   text-align: center;
   padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   border-radius: $radius-2xl;
   backdrop-filter: blur(10px);
 
   @include desktop {
-    background: $color-white;
-    box-shadow: $shadow-md;
+    background: var(--pvz-bg-card);
+    border: 1px solid var(--pvz-border);
+    box-shadow: var(--pvz-shadow-card);
+    backdrop-filter: none;
   }
 
   .empty-icon  { font-size: 80px; margin-bottom: 16px; }
-  .empty-title { margin: 0 0 8px; color: $color-white; font-size: 20px; font-weight: $font-weight-semibold;
-    @include desktop { color: $color-text-dark; }
+
+  .empty-title {
+    margin: 0 0 8px;
+    color: $color-white;
+    font-size: 20px;
+    font-weight: $font-weight-semibold;
+    @include desktop { color: var(--pvz-text); }
   }
-  .empty-text  { margin: 0; color: rgba(255,255,255,0.8); font-size: 14px;
-    @include desktop { color: $color-text-muted; }
+
+  .empty-text {
+    margin: 0;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    @include desktop { color: var(--pvz-text-muted); }
   }
 }
 
-// ─── Section Card ────────────────────────────────────────────
-
+// ─── Section Card ─────────────────────────────────────────────
 @mixin section-card {
   @include card($radius-xl, 20px);
   margin-bottom: 16px;
@@ -271,12 +239,11 @@
     margin: 0;
     font-size: 16px;
     font-weight: $font-weight-bold;
-    color: $color-text-dark;
+    color: var(--pvz-text);
   }
 }
 
-// ─── Settings List ───────────────────────────────────────────
-
+// ─── Settings List ────────────────────────────────────────────
 @mixin settings-list {
   display: flex;
   flex-direction: column;
@@ -291,7 +258,7 @@
     cursor: pointer;
     transition: background 0.2s;
 
-    @include hover { &:hover { background: $color-bg-page; } }
+    @include hover { &:hover { background: var(--pvz-bg); } }
 
     .setting-left {
       display: flex;
@@ -310,19 +277,18 @@
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      background: $color-bg-page;
+      background: var(--pvz-bg);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .setting-label  { font-size: 15px; font-weight: $font-weight-medium; color: $color-text-dark; }
-    .setting-value  { font-size: 14px; color: $color-text-muted; }
+    .setting-label { font-size: 15px; font-weight: $font-weight-medium; color: var(--pvz-text); }
+    .setting-value { font-size: 14px; color: var(--pvz-text-muted); }
   }
 }
 
-// ─── Blobs ───────────────────────────────────────────────────
-
+// ─── Blobs ────────────────────────────────────────────────────
 @mixin blobs {
   .blob {
     position: absolute;
@@ -332,14 +298,14 @@
     animation: float 20s ease-in-out infinite;
     pointer-events: none;
 
-    &-1 { width: 300px; height: 300px; background: rgba(255,255,255,0.3); top: -100px; left: -100px; animation-delay: 0s; }
-    &-2 { width: 400px; height: 400px; background: rgba(255,255,255,0.2); bottom: -150px; right: -150px; animation-delay: 5s; }
-    &-3 { width: 250px; height: 250px; background: rgba(255,255,255,0.25); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 10s; }
+    &-1 { width: 300px; height: 300px; background: rgba(255,255,255,0.3); top: -100px;    left: -100px;    animation-delay: 0s;  }
+    &-2 { width: 400px; height: 400px; background: rgba(255,255,255,0.2); bottom: -150px; right: -150px;   animation-delay: 5s;  }
+    &-3 { width: 250px; height: 250px; background: rgba(255,255,255,0.25); top: 50%; left: 50%;
+          transform: translate(-50%, -50%); animation-delay: 10s; }
   }
 }
 
-// ─── Status Badge ────────────────────────────────────────────
-
+// ─── Status Badge ─────────────────────────────────────────────
 @mixin status-badge($padding: '6px 12px', $radius: $radius-md) {
   padding: #{$padding};
   border-radius: $radius;
