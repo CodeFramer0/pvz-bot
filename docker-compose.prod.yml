@@ -3,9 +3,11 @@ volumes:
   # Подключаем твой старый волюм базы
   postgres_data:
     external: true
-    name: pvz_postgres_data
+    name: pvzbot_postgres_data
   redis_data:
   minio_data:
+    external: true
+    name: pvzbot_minio_data
 
 services:
   traefik:
