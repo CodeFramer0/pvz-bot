@@ -103,3 +103,21 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 10
+  db-backup:
+    image: postgres:16.2
+    entrypoint: ["/bin/sh", "-c", "/backup.sh"]
+    env_file: .env
+    environment:
+      MC_URL: http://minio:9000
+    volumes:
+      - ./backup.sh:/backup.sh
+    networks:
+      - pvz_net
+    deploy:
+      replicas: 0  # не запускается сам по себе
+      restart_policy:
+        condition: none
+      labels:
+        - "swarm.cronjob.enable=true"
+        - "swarm.cronjob.schedule=0 3 * * *"  # каждый день в 3:00
+        - "swarm.cronjob.skip-running=true"
