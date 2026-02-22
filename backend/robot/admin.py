@@ -134,13 +134,14 @@ class OrderAdmin(admin.ModelAdmin):
         "date_created",
     )
     search_fields = (
-        "full_name",
-        "pickup_point__address",
-        "customer__id",
-        "customer__nick_name",
-        "customer__name",
-        "marketplace__code",  # ← добавлено для поиска
-    )
+            "id",
+            "full_name",
+            "pickup_point__address",
+            "customer__id",
+            "customer__telegram_user__nick_name", 
+            "customer__telegram_user__name",
+            "marketplace__name",
+        )
     ordering = ("-date_created",)
     readonly_fields = (
         "customer",
